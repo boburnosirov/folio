@@ -22,6 +22,7 @@ type BookCoverProps = {
   variant: CoverVariant;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   back?: boolean;
+  imageUrl?: string;
   className?: string;
 };
 
@@ -49,6 +50,21 @@ const SIZES = {
   md: "h-40 w-28 rounded-[10px]",
   lg: "h-52 w-36 rounded-[12px]",
   xl: "h-64 w-44 rounded-[14px]",
+};
+
+const REAL_COVERS: Record<CoverVariant, string> = {
+  anna: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
+  crime: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
+  babur: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
+  austen: "https://commons.wikimedia.org/wiki/Special:FilePath/PrideAndPrejudiceTitlePage.jpg?width=700",
+  sherlock: "https://commons.wikimedia.org/wiki/Special:FilePath/Adventures_of_sherlock_holmes.jpg?width=700",
+  navai: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_%28Quintet%29_-_Walters_W663_-_Top_Exterior.jpg?width=700",
+  verne: "https://commons.wikimedia.org/wiki/Special:FilePath/Houghton_FC8_V5946_869ve_-_Verne,_frontispiece.jpg?width=700",
+  franklin: "https://commons.wikimedia.org/wiki/Special:FilePath/Memoirs_of_Franklin.jpg?width=700",
+  gogol: "https://commons.wikimedia.org/wiki/Special:FilePath/Dead_Souls_%28novel%29_Nikolai_Gogol_1842_title_page.jpg?width=700",
+  chekhov: "https://commons.wikimedia.org/wiki/Special:FilePath/Chekhov_Detvora_cover.jpg?width=700",
+  hugo: "https://commons.wikimedia.org/wiki/Special:FilePath/Les_miserables.jpg?width=700",
+  marcus: "https://commons.wikimedia.org/wiki/Special:FilePath/Marcus_Aurelius_Meditations_English_edition.jpg?width=700",
 };
 
 function CoverMotif({
@@ -133,9 +149,11 @@ export function BookCover({
   variant,
   size = "md",
   back = false,
+  imageUrl,
   className,
 }: BookCoverProps) {
   const style = COVER_STYLES[variant];
+  const coverImage = imageUrl ?? REAL_COVERS[variant];
 
   if (back) {
     return (
@@ -163,16 +181,15 @@ export function BookCover({
         className
       )}
     >
-      <div className="absolute inset-y-0 left-0 w-[12%] bg-black/20" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_35%_18%,rgba(255,255,255,.32),transparent_32%),linear-gradient(to_bottom,rgba(255,255,255,.18),transparent_34%,rgba(0,0,0,.28))]" />
-      <CoverMotif motif={style.motif} accent={style.accent} />
-      <div className="absolute inset-x-3 top-4 text-center">
-        <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-white/60">{author}</p>
-      </div>
-      <div className="absolute inset-x-3 bottom-4 text-center">
-        <p className="font-heading text-[13px] font-semibold leading-[1.05] text-white drop-shadow-sm">{title}</p>
-      </div>
-      <div className="absolute inset-x-4 top-[24%] h-px" style={{ background: style.accent, opacity: 0.65 }} />
+      <img
+        src={coverImage}
+        alt={`${title} — ${author}`}
+        className="absolute inset-0 h-full w-full bg-white object-cover"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+      <div className="absolute inset-y-0 left-0 w-[10%] bg-gradient-to-r from-black/30 to-transparent mix-blend-multiply" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,.16),transparent_26%,rgba(0,0,0,.10))]" />
     </div>
   );
 }
