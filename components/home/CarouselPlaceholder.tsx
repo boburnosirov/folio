@@ -6,12 +6,37 @@ import { useRef } from "react";
 import { ArrowRight, Layers } from "lucide-react";
 import { BookCover, CoverVariant } from "./BookCover";
 
-const MONTH_BOOKS: Array<{ title: string; author: string; variant: CoverVariant }> = [
-  { title: "Война и мир", author: "Толстой", variant: "anna" },
-  { title: "Холмс", author: "Дойл", variant: "sherlock" },
-  { title: "Бабур-наме", author: "Бабур", variant: "babur" },
-  { title: "Жюль Верн", author: "Верн", variant: "verne" },
-  { title: "Размышления", author: "Аврелий", variant: "marcus" },
+const MONTH_BOOKS: Array<{ title: string; author: string; variant: CoverVariant; imageUrl: string }> = [
+  {
+    title: "Анна Каренина",
+    author: "Толстой",
+    variant: "anna",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
+  },
+  {
+    title: "Популярная астрономия",
+    author: "Фламмарион",
+    variant: "verne",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
+  },
+  {
+    title: "Бабур-наме",
+    author: "Бабур",
+    variant: "babur",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
+  },
+  {
+    title: "Poor Richard",
+    author: "Франклин",
+    variant: "franklin",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Poor_Richard.jpg?width=700",
+  },
+  {
+    title: "Размышления",
+    author: "Марк Аврелий",
+    variant: "marcus",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
+  },
 ];
 
 function PillLink({ href, children, primary = false }: { href: string; children: React.ReactNode; primary?: boolean }) {
@@ -48,12 +73,12 @@ export function CarouselPlaceholder() {
               Книги месяца
             </h2>
             <p className="mt-4 max-w-xl text-base leading-7 text-foreground/58 dark:text-white/58">
-              Здесь появится финальная 3D-карусель после сравнения CSS и React Three Fiber версий. Пока держим аккуратный плейсхолдер на тех же книгах.
+              В подборке не только романы: классика, наука, узбекское наследие, философия и практическая литература.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-foreground/48">
             <Layers className="h-4 w-4" />
-            Демо-версии ниже
+            Демо-карусель оставлена для сравнения
           </div>
         </motion.div>
 

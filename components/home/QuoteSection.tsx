@@ -12,6 +12,7 @@ const EXCERPTS: Array<{
   work: string;
   slug: string;
   variant: CoverVariant;
+  imageUrl: string;
 }> = [
   {
     text: "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему.",
@@ -19,6 +20,7 @@ const EXCERPTS: Array<{
     work: "Анна Каренина",
     slug: "anna-karenina",
     variant: "anna",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
   },
   {
     text: "Он был задавлен бедностью; но стеснённое положение перестало в последнее время тяготить его.",
@@ -26,20 +28,23 @@ const EXCERPTS: Array<{
     work: "Преступление и наказание",
     slug: "prestuplenie-i-nakazanie",
     variant: "crime",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
   },
   {
-    text: "Мой дядя самых честных правил, когда не в шутку занемог...",
-    author: "Александр Пушкин",
-    work: "Евгений Онегин",
-    slug: "evgeniy-onegin",
-    variant: "gogol",
+    text: "Небо было в звёздах, и каждая звезда казалась живой точкой огромного молчаливого пространства.",
+    author: "Камиль Фламмарион",
+    work: "Популярная астрономия",
+    slug: "populyarnaya-astronomiya",
+    variant: "verne",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
   },
   {
-    text: "It is a truth universally acknowledged, that a single man in possession of a good fortune must be in want of a wife.",
-    author: "Jane Austen",
-    work: "Pride and Prejudice",
-    slug: "pride-and-prejudice",
-    variant: "austen",
+    text: "Богатство приходит к тому, кто действует в определённом образе мышления и делает это последовательно.",
+    author: "Уоллес Уоттлз",
+    work: "Наука стать богатым",
+    slug: "the-science-of-getting-rich",
+    variant: "franklin",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
   },
   {
     text: "Менинг кўнглим гулшан истар, гулшан ичра ёр истар.",
@@ -47,6 +52,7 @@ const EXCERPTS: Array<{
     work: "Лирика",
     slug: "alisher-navai-lyrics",
     variant: "navai",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
   },
 ];
 
@@ -81,7 +87,13 @@ export function QuoteSection() {
               exit={{ opacity: 0, y: -14, rotate: 3 }}
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             >
-              <BookCover title={active.work} author={active.author} variant={active.variant} size="xl" />
+              <BookCover
+                title={active.work}
+                author={active.author}
+                variant={active.variant}
+                imageUrl={active.imageUrl}
+                size="xl"
+              />
             </motion.div>
           </AnimatePresence>
         </div>

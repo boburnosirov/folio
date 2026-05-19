@@ -6,10 +6,26 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { BookCover, CoverVariant } from "./BookCover";
 import { cn } from "@/lib/utils";
 
+const IMG = {
+  anna: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
+  crime: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
+  babur: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
+  austen: "https://commons.wikimedia.org/wiki/Special:FilePath/PrideAndPrejudiceTitlePage.jpg?width=700",
+  sherlock: "https://commons.wikimedia.org/wiki/Special:FilePath/Adventures_of_sherlock_holmes.jpg?width=700",
+  navai: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
+  verne: "https://commons.wikimedia.org/wiki/Special:FilePath/Verne_Tour_du_Monde.jpg?width=700",
+  astronomy: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
+  poorRichard: "https://commons.wikimedia.org/wiki/Special:FilePath/Poor_Richard.jpg?width=700",
+  scienceRich: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
+  meditations: "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
+  janeEyre: "https://commons.wikimedia.org/wiki/Special:FilePath/Jane_Eyre_title_page.jpg?width=700",
+};
+
 const HERO_BOOKS: Array<{
   title: string;
   author: string;
   variant: CoverVariant;
+  imageUrl?: string;
   size: "sm" | "md" | "lg" | "xl";
   className: string;
   rotate: number;
@@ -20,15 +36,17 @@ const HERO_BOOKS: Array<{
     title: "Анна Каренина",
     author: "Л. Толстой",
     variant: "anna",
+    imageUrl: IMG.anna,
     size: "xl",
     className: "-left-14 top-[18%] hidden lg:block",
     rotate: -13,
     delay: 0,
   },
   {
-    title: "Преступление",
-    author: "Достоевский",
+    title: "Преступление и наказание",
+    author: "Ф. Достоевский",
     variant: "crime",
+    imageUrl: IMG.crime,
     size: "lg",
     className: "left-[10%] top-[12%] hidden md:block",
     rotate: 8,
@@ -38,49 +56,54 @@ const HERO_BOOKS: Array<{
     title: "Бабур-наме",
     author: "Бабур",
     variant: "babur",
+    imageUrl: IMG.babur,
     size: "lg",
     className: "right-[12%] top-[10%] hidden md:block",
     rotate: -7,
     delay: 0.1,
   },
   {
-    title: "Гордость",
-    author: "Дж. Остин",
-    variant: "austen",
+    title: "Популярная астрономия",
+    author: "К. Фламмарион",
+    variant: "verne",
+    imageUrl: IMG.astronomy,
     size: "md",
     className: "right-[-2rem] top-[24%] hidden sm:block",
     rotate: 14,
     delay: 0.35,
   },
   {
-    title: "Навои",
-    author: "Алишер",
-    variant: "navai",
+    title: "Self-Help",
+    author: "С. Смайлс",
+    variant: "franklin",
+    imageUrl: IMG.scienceRich,
     size: "md",
     className: "left-[18%] bottom-[14%] hidden sm:block",
     rotate: -9,
     delay: 0.45,
   },
   {
-    title: "Верн",
-    author: "Жюль",
+    title: "Вокруг света",
+    author: "Ж. Верн",
     variant: "verne",
+    imageUrl: IMG.verne,
     size: "lg",
     className: "right-[18%] bottom-[11%] hidden md:block",
     rotate: 10,
     delay: 0.2,
   },
   {
-    title: "Записки",
-    author: "Чехов",
-    variant: "chekhov",
+    title: "Размышления",
+    author: "Марк Аврелий",
+    variant: "marcus",
+    imageUrl: IMG.meditations,
     size: "sm",
     className: "left-[4%] bottom-[7%]",
     rotate: 12,
     delay: 0.55,
   },
   {
-    title: "Обложка",
+    title: "Задняя сторона книги",
     author: "",
     variant: "franklin",
     size: "md",
@@ -140,14 +163,27 @@ export function HeroSection() {
             key={`${book.title}-${index}`}
             className={cn("absolute will-change-transform", book.className)}
             style={{ rotate: book.rotate }}
+            initial={{ opacity: 0, y: 20, scale: 0.94 }}
             animate={{
+              opacity: 1,
+              scale: 1,
               y: reduceMotion ? 0 : [0, -10, 0],
             }}
             transition={{
-              y: reduceMotion ? { duration: 0 } : { duration: 6 + index * 0.55, repeat: Infinity, ease: "easeInOut", delay: book.delay },
+              opacity: { duration: 0.7, delay: book.delay },
+              scale: { duration: 0.7, delay: book.delay },
+              y: reduceMotion ? { duration: 0 } : { duration: 6 + index * 0.55, repeat: Infinity, ease: "easeInOut", delay: book.delay + 0.7 },
             }}
           >
-            <BookCover {...book} className="drop-shadow-[0_30px_45px_rgba(0,0,0,.22)] dark:drop-shadow-[0_38px_58px_rgba(0,0,0,.55)]" />
+            <BookCover
+              title={book.title}
+              author={book.author}
+              variant={book.variant}
+              imageUrl={book.imageUrl}
+              size={book.size}
+              back={book.back}
+              className="drop-shadow-[0_30px_45px_rgba(0,0,0,.22)] dark:drop-shadow-[0_38px_58px_rgba(0,0,0,.55)]"
+            />
           </motion.div>
         ))}
       </div>
@@ -164,10 +200,7 @@ export function HeroSection() {
           className="font-heading text-[clamp(5rem,17vw,10.5rem)] font-semibold leading-[0.82] tracking-[-0.035em] text-foreground dark:text-white"
         >
           {letters.map((letter, index) => (
-            <span
-              key={`${letter}-${index}`}
-              className="inline-block"
-            >
+            <span key={`${letter}-${index}`} className="inline-block">
               {letter}
             </span>
           ))}
@@ -179,15 +212,10 @@ export function HeroSection() {
           transition={{ duration: 0.65, delay: 0.35 }}
           className="mt-7 max-w-2xl text-balance text-lg leading-8 text-foreground/68 dark:text-white/68 sm:text-xl"
         >
-          Русская, зарубежная и узбекская классика для чтения онлайн и скачивания. Легально, спокойно, без лишнего шума.
+          Классика, философия, саморазвитие, бизнес, наука и узбекское наследие — для чтения онлайн и скачивания.
         </motion.p>
 
-        <motion.div
-          initial={false}
-          animate={undefined}
-          transition={{ duration: 0.6, delay: 0.52 }}
-          className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
-        >
+        <motion.div initial={false} className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <AppleButton href="/catalog">
             Перейти в каталог <ArrowRight className="ml-2 h-4 w-4" />
           </AppleButton>

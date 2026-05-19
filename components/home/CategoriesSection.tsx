@@ -6,12 +6,43 @@ import { motion, useInView } from "framer-motion";
 import { BookOpen, Brain, Briefcase, Globe, Heart, Star, Telescope, TrendingUp } from "lucide-react";
 import { BookCover, CoverVariant } from "./BookCover";
 
+const IMG = {
+  anna: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
+  crime: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
+  gogol: "https://commons.wikimedia.org/wiki/Special:FilePath/Dead_Souls_(novel)_Nikolai_Gogol_1842_title_page.jpg?width=700",
+  chekhov: "https://commons.wikimedia.org/wiki/Special:FilePath/Chekhov_Detvora_cover.jpg?width=700",
+  hugo: "https://commons.wikimedia.org/wiki/Special:FilePath/Les_miserables.jpg?width=700",
+  austen: "https://commons.wikimedia.org/wiki/Special:FilePath/PrideAndPrejudiceTitlePage.jpg?width=700",
+  sherlock: "https://commons.wikimedia.org/wiki/Special:FilePath/Adventures_of_sherlock_holmes.jpg?width=700",
+  janeEyre: "https://commons.wikimedia.org/wiki/Special:FilePath/Jane_Eyre_title_page.jpg?width=700",
+  werther: "https://commons.wikimedia.org/wiki/Special:FilePath/-1-_Die_Leiden_des_jungen_Werthers._Erstdruck.jpg?width=700",
+  tenant: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Tenant_of_Wildfell_Hall.jpg?width=700",
+  meditations: "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
+  seneca: "https://commons.wikimedia.org/wiki/Special:FilePath/Seneca_-_Lettere,_1802_(page_3_crop).jpg?width=700",
+  montaigne: "https://commons.wikimedia.org/wiki/Special:FilePath/Montaigne_-_Essais,_Musart,_1847.djvu?width=700",
+  selfHelp: "https://commons.wikimedia.org/wiki/Special:FilePath/Self-Help_-_Facing_page_108.png?width=700",
+  rich: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
+  poorRichard: "https://commons.wikimedia.org/wiki/Special:FilePath/Poor_Richard.jpg?width=700",
+  franklin: "https://commons.wikimedia.org/wiki/Special:FilePath/The_autobiography_of_Benjamin_Franklin_(1895)_(14804149143).jpg?width=700",
+  verne: "https://commons.wikimedia.org/wiki/Special:FilePath/Verne_Tour_du_Monde.jpg?width=700",
+  astronomy: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
+  babur: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
+  navai: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
+};
+
+type CategoryCover = {
+  title: string;
+  author: string;
+  variant: CoverVariant;
+  imageUrl: string;
+};
+
 const CATEGORIES: Array<{
   slug: string;
   name: string;
   desc: string;
   icon: typeof BookOpen;
-  covers: Array<{ title: string; author: string; variant: CoverVariant }>;
+  covers: CategoryCover[];
 }> = [
   {
     slug: "russian-classics",
@@ -19,9 +50,9 @@ const CATEGORIES: Array<{
     desc: "Толстой, Достоевский, Чехов, Гоголь",
     icon: BookOpen,
     covers: [
-      { title: "Анна", author: "Толстой", variant: "anna" },
-      { title: "Шинель", author: "Гоголь", variant: "gogol" },
-      { title: "Чехов", author: "Рассказы", variant: "chekhov" },
+      { title: "Анна Каренина", author: "Толстой", variant: "anna", imageUrl: IMG.anna },
+      { title: "Преступление", author: "Достоевский", variant: "crime", imageUrl: IMG.crime },
+      { title: "Детвора", author: "Чехов", variant: "chekhov", imageUrl: IMG.chekhov },
     ],
   },
   {
@@ -30,20 +61,20 @@ const CATEGORIES: Array<{
     desc: "Гюго, Остин, Диккенс, Конан Дойл",
     icon: Globe,
     covers: [
-      { title: "Гюго", author: "Собор", variant: "hugo" },
-      { title: "Остин", author: "Роман", variant: "austen" },
-      { title: "Холмс", author: "Дойл", variant: "sherlock" },
+      { title: "Отверженные", author: "Гюго", variant: "hugo", imageUrl: IMG.hugo },
+      { title: "Гордость", author: "Остин", variant: "austen", imageUrl: IMG.austen },
+      { title: "Шерлок", author: "Дойл", variant: "sherlock", imageUrl: IMG.sherlock },
     ],
   },
   {
     slug: "romance",
     name: "Романтика",
-    desc: "Ася, Первая любовь, Джейн Остин",
+    desc: "Остин, Бронте, Гёте, Тургенев",
     icon: Heart,
     covers: [
-      { title: "Остин", author: "Джейн", variant: "austen" },
-      { title: "Ася", author: "Тургенев", variant: "chekhov" },
-      { title: "Вертер", author: "Гёте", variant: "hugo" },
+      { title: "Jane Eyre", author: "Bronte", variant: "austen", imageUrl: IMG.janeEyre },
+      { title: "Werther", author: "Goethe", variant: "hugo", imageUrl: IMG.werther },
+      { title: "Wildfell Hall", author: "Bronte", variant: "austen", imageUrl: IMG.tenant },
     ],
   },
   {
@@ -52,42 +83,42 @@ const CATEGORIES: Array<{
     desc: "Марк Аврелий, Сенека, Монтень",
     icon: Brain,
     covers: [
-      { title: "Наедине", author: "Аврелий", variant: "marcus" },
-      { title: "Сенека", author: "Письма", variant: "franklin" },
-      { title: "Монтень", author: "Опыты", variant: "gogol" },
+      { title: "Размышления", author: "Аврелий", variant: "marcus", imageUrl: IMG.meditations },
+      { title: "Письма", author: "Сенека", variant: "franklin", imageUrl: IMG.seneca },
+      { title: "Опыты", author: "Монтень", variant: "gogol", imageUrl: IMG.montaigne },
     ],
   },
   {
     slug: "self-development",
     name: "Саморазвитие",
-    desc: "Хилл, Смайлс, Марден, Уоттлз",
+    desc: "Смайлс, Уоттлз, классика успеха",
     icon: TrendingUp,
     covers: [
-      { title: "Self Help", author: "Smiles", variant: "franklin" },
-      { title: "Think", author: "Hill", variant: "marcus" },
-      { title: "Science", author: "Wattles", variant: "verne" },
+      { title: "Self-Help", author: "Smiles", variant: "franklin", imageUrl: IMG.selfHelp },
+      { title: "The Science", author: "Wattles", variant: "verne", imageUrl: IMG.rich },
+      { title: "Poor Richard", author: "Franklin", variant: "franklin", imageUrl: IMG.poorRichard },
     ],
   },
   {
     slug: "business-success",
     name: "Бизнес и успех",
-    desc: "Франклин, Карнеги и классические эссе",
+    desc: "Франклин, Карнеги, эссе о деле",
     icon: Briefcase,
     covers: [
-      { title: "Авто", author: "Франклин", variant: "franklin" },
-      { title: "Успех", author: "Карнеги", variant: "marcus" },
-      { title: "Эссе", author: "Классика", variant: "hugo" },
+      { title: "Poor Richard", author: "Franklin", variant: "franklin", imageUrl: IMG.poorRichard },
+      { title: "Автобиография", author: "Franklin", variant: "franklin", imageUrl: IMG.franklin },
+      { title: "Self-Help", author: "Smiles", variant: "marcus", imageUrl: IMG.selfHelp },
     ],
   },
   {
     slug: "science",
     name: "Космос и наука",
-    desc: "Циолковский, Верн, Фламмарион",
+    desc: "Фламмарион, Верн, Циолковский",
     icon: Telescope,
     covers: [
-      { title: "Верн", author: "Жюль", variant: "verne" },
-      { title: "Космос", author: "Циолковский", variant: "navai" },
-      { title: "Звёзды", author: "Фламмарион", variant: "hugo" },
+      { title: "Астрономия", author: "Фламмарион", variant: "verne", imageUrl: IMG.astronomy },
+      { title: "Вокруг света", author: "Верн", variant: "verne", imageUrl: IMG.verne },
+      { title: "20 000 лье", author: "Верн", variant: "sherlock", imageUrl: IMG.verne },
     ],
   },
   {
@@ -96,9 +127,9 @@ const CATEGORIES: Array<{
     desc: "Навои, Бабур, Чулпан, Мукими",
     icon: Star,
     covers: [
-      { title: "Навои", author: "Алишер", variant: "navai" },
-      { title: "Бабур", author: "Наме", variant: "babur" },
-      { title: "Чулпан", author: "Классика", variant: "franklin" },
+      { title: "Бабур-наме", author: "Бабур", variant: "babur", imageUrl: IMG.babur },
+      { title: "Хамса", author: "Навои", variant: "navai", imageUrl: IMG.navai },
+      { title: "Диван", author: "Навои", variant: "navai", imageUrl: IMG.navai },
     ],
   },
 ];
@@ -124,7 +155,7 @@ function CategoryCard({ category, index, inView }: { category: (typeof CATEGORIE
           <div className="relative mb-6 h-24">
             {category.covers.map((cover, coverIndex) => (
               <div
-                key={cover.title}
+                key={`${category.slug}-${cover.title}-${coverIndex}`}
                 className="absolute bottom-0 transition-transform duration-300 ease-out group-hover:translate-y-[-6px]"
                 style={{
                   left: `calc(50% - 42px + ${coverIndex * 28}px)`,
