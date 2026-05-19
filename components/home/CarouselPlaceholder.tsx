@@ -4,125 +4,86 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { ArrowRight, Layers } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { BookCover, CoverVariant } from "./BookCover";
 
-const MOCK_BOOKS = [
-  { title: "Война и мир",    author: "Толстой",      color: "#1a2d4a" },
-  { title: "Преступление",   author: "Достоевский",  color: "#3d1414" },
-  { title: "Отцы и дети",    author: "Тургенев",     color: "#173822" },
-  { title: "Бабур-наме",     author: "Бабур",        color: "#2c1940" },
-  { title: "Мастер и Маргарита", author: "Булгаков", color: "#3d2710" },
+const MONTH_BOOKS: Array<{ title: string; author: string; variant: CoverVariant }> = [
+  { title: "Война и мир", author: "Толстой", variant: "anna" },
+  { title: "Холмс", author: "Дойл", variant: "sherlock" },
+  { title: "Бабур-наме", author: "Бабур", variant: "babur" },
+  { title: "Жюль Верн", author: "Верн", variant: "verne" },
+  { title: "Размышления", author: "Аврелий", variant: "marcus" },
 ];
+
+function PillLink({ href, children, primary = false }: { href: string; children: React.ReactNode; primary?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={
+        primary
+          ? "inline-flex h-10 items-center rounded-full bg-[#0071e3] px-5 text-sm font-semibold text-white transition-transform hover:scale-[1.025] active:scale-[.97]"
+          : "inline-flex h-10 items-center rounded-full border border-foreground/12 bg-background/70 px-5 text-sm font-semibold text-foreground backdrop-blur-xl transition-colors hover:bg-foreground/[.06]"
+      }
+    >
+      {children}
+    </Link>
+  );
+}
 
 export function CarouselPlaceholder() {
   const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-6">
-        {/* Header */}
+    <section ref={ref} className="relative overflow-hidden px-6 py-24">
+      <div className="mx-auto max-w-7xl">
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="mb-14 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: 0.55 }}
+          className="mb-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between"
         >
-          <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary/60 mb-3">
-            Рекомендуем
-          </p>
-          <h2
-            className="text-4xl sm:text-5xl font-semibold text-foreground"
-            style={{ fontFamily: "var(--font-cormorant), serif" }}
-          >
-            Книги месяца
-          </h2>
-          <p className="mt-4 text-muted-foreground text-sm max-w-md mx-auto">
-            3D-карусель в разработке. Скоро здесь появятся книги с объёмными обложками.
-          </p>
+          <div>
+            <p className="text-sm font-semibold text-[#0071e3] dark:text-primary">Рекомендуем</p>
+            <h2 className="mt-2 text-4xl font-semibold tracking-[-0.035em] text-foreground sm:text-6xl">
+              Книги месяца
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-foreground/58 dark:text-white/58">
+              Здесь появится финальная 3D-карусель после сравнения CSS и React Three Fiber версий. Пока держим аккуратный плейсхолдер на тех же книгах.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-foreground/48">
+            <Layers className="h-4 w-4" />
+            Демо-версии ниже
+          </div>
         </motion.div>
 
-        {/* Mock book row */}
-        <div className="flex items-end justify-center gap-4 sm:gap-6 perspective-[1000px]">
-          {MOCK_BOOKS.map((book, i) => {
-            const isCentre = i === 2;
-            const offset = i - 2;
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 40, rotateY: offset * 8 }}
-                animate={inView ? { opacity: 1, y: 0, rotateY: offset * 5 } : {}}
-                transition={{ duration: 0.7, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ y: -10, rotateY: 0, scale: 1.04 }}
-                className={cn(
-                  "relative flex-shrink-0 rounded-md cursor-pointer",
-                  "transition-shadow duration-300",
-                  isCentre ? "shadow-2xl shadow-primary/20" : "shadow-lg"
-                )}
-                style={{
-                  width: isCentre ? 140 : 110,
-                  height: isCentre ? 210 : 165,
-                  background: `linear-gradient(135deg, ${book.color} 0%, ${book.color}cc 100%)`,
-                  transformOrigin: "bottom center",
-                  transform: `scale(${isCentre ? 1 : 0.88 - Math.abs(offset) * 0.06})`,
-                }}
-              >
-                {/* Spine */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-3 rounded-l-md"
-                  style={{ background: "rgba(212,168,67,0.35)" }}
-                />
-                {/* Title */}
-                <div className="absolute inset-0 flex flex-col justify-end p-3 pl-5">
-                  <p
-                    className="text-white/90 font-semibold leading-tight text-xs"
-                    style={{ fontFamily: "var(--font-cormorant), serif" }}
-                  >
-                    {book.title}
-                  </p>
-                  <p className="text-white/50 text-[10px] mt-0.5">{book.author}</p>
-                </div>
-              </motion.div>
-            );
-          })}
+        <div className="relative rounded-[34px] border border-black/6 bg-white/62 px-5 py-10 shadow-[0_26px_80px_rgba(0,0,0,.07)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[.055] sm:px-8">
+          <div className="flex items-end justify-center gap-3 sm:gap-6">
+            {MONTH_BOOKS.map((book, index) => {
+              const offset = index - 2;
+              return (
+                <motion.div
+                  key={book.title}
+                  initial={{ opacity: 0, y: 28, rotate: offset * 4 }}
+                  animate={inView ? { opacity: 1, y: 0, rotate: offset * 3 } : undefined}
+                  transition={{ duration: 0.65, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -8, scale: 1.035, rotate: 0 }}
+                  className={index === 0 || index === 4 ? "hidden sm:block" : ""}
+                >
+                  <BookCover {...book} size={index === 2 ? "xl" : "lg"} />
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <PillLink href="/demo/css">CSS 3D</PillLink>
+            <PillLink href="/demo/r3f">React Three Fiber</PillLink>
+            <PillLink href="/catalog" primary>
+              Весь каталог <ArrowRight className="ml-2 h-4 w-4" />
+            </PillLink>
+          </div>
         </div>
-
-        {/* Demo links */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.5 }}
-          className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Layers className="h-3.5 w-3.5 text-primary/60" />
-            Сравни два варианта карусели:
-          </div>
-          <div className="flex gap-3">
-            <Link
-              href="/demo/css"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs")}
-            >
-              CSS 3D
-            </Link>
-            <Link
-              href="/demo/r3f"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs")}
-            >
-              React Three Fiber
-            </Link>
-          </div>
-          <Link
-            href="/catalog"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "bg-primary text-primary-foreground text-xs"
-            )}
-          >
-            Весь каталог <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Link>
-        </motion.div>
       </div>
     </section>
   );

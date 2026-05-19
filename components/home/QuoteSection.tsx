@@ -1,97 +1,141 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { BookCover, CoverVariant } from "./BookCover";
 
-const QUOTE = {
-  text: "Всё смешалось в доме Облонских. Жена узнала, что муж был в связи с бывшею в их доме француженкою-гувернанткой, и объявила мужу, что не может жить с ним в одном доме.",
-  author: "Лев Толстой",
-  work: "«Анна Каренина»",
-};
-
-// Split into words for stagger animation
-function AnimatedQuote({ text, inView }: { text: string; inView: boolean }) {
-  const words = text.split(" ");
-  return (
-    <span aria-label={text}>
-      {words.map((word, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 12 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{
-            duration: 0.45,
-            delay: 0.1 + i * 0.022,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="inline-block mr-[0.3em]"
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
+const EXCERPTS: Array<{
+  text: string;
+  author: string;
+  work: string;
+  slug: string;
+  variant: CoverVariant;
+}> = [
+  {
+    text: "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему.",
+    author: "Лев Толстой",
+    work: "Анна Каренина",
+    slug: "anna-karenina",
+    variant: "anna",
+  },
+  {
+    text: "Он был задавлен бедностью; но стеснённое положение перестало в последнее время тяготить его.",
+    author: "Фёдор Достоевский",
+    work: "Преступление и наказание",
+    slug: "prestuplenie-i-nakazanie",
+    variant: "crime",
+  },
+  {
+    text: "Мой дядя самых честных правил, когда не в шутку занемог...",
+    author: "Александр Пушкин",
+    work: "Евгений Онегин",
+    slug: "evgeniy-onegin",
+    variant: "gogol",
+  },
+  {
+    text: "It is a truth universally acknowledged, that a single man in possession of a good fortune must be in want of a wife.",
+    author: "Jane Austen",
+    work: "Pride and Prejudice",
+    slug: "pride-and-prejudice",
+    variant: "austen",
+  },
+  {
+    text: "Менинг кўнглим гулшан истар, гулшан ичра ёр истар.",
+    author: "Алишер Навои",
+    work: "Лирика",
+    slug: "alisher-navai-lyrics",
+    variant: "navai",
+  },
+];
 
 export function QuoteSection() {
   const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: false, margin: "-100px" });
+  const reduceMotion = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  const active = EXCERPTS[index];
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % EXCERPTS.length);
+    }, 22000);
+    return () => window.clearInterval(timer);
+  }, [reduceMotion]);
 
   return (
-    <section
-      ref={ref}
-      className="relative overflow-hidden py-28"
-      style={{
-        background:
-          "linear-gradient(to bottom, transparent, oklch(0.09 0.014 268) 20%, oklch(0.09 0.014 268) 80%, transparent)",
-      }}
-    >
-      {/* Decorative gold lines */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-px w-full opacity-20"
-          style={{ background: "linear-gradient(to right, transparent, #d4a843 40%, #d4a843 60%, transparent)" }}
-        />
-        <div
-          className="absolute left-1/2 -translate-x-1/2 top-0 w-px h-full opacity-10"
-          style={{ background: "linear-gradient(to bottom, transparent, #d4a843 30%, #d4a843 70%, transparent)" }}
-        />
-      </div>
+    <section ref={ref} className="relative overflow-hidden px-6 py-28">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_30%,rgba(0,113,227,.10),transparent_30%),radial-gradient(circle_at_78%_44%,rgba(212,168,67,.15),transparent_28%)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
 
-      <div className="relative mx-auto max-w-3xl px-6 text-center">
-        {/* Opening quote mark */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={inView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.5 }}
-          className="mb-6 text-8xl leading-none text-primary/20 select-none"
-          style={{ fontFamily: "var(--font-cormorant), serif" }}
-          aria-hidden
-        >
-          "
-        </motion.div>
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 rounded-[34px] border border-black/6 bg-white/64 p-6 shadow-[0_28px_90px_rgba(0,0,0,.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.055] md:grid-cols-[260px_1fr] md:p-10">
+        <div className="flex justify-center md:justify-start">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active.slug}
+              initial={{ opacity: 0, y: 18, rotate: -4 }}
+              animate={inView ? { opacity: 1, y: 0, rotate: -2 } : undefined}
+              exit={{ opacity: 0, y: -14, rotate: 3 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <BookCover title={active.work} author={active.author} variant={active.variant} size="xl" />
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-        {/* Quote text */}
-        <blockquote
-          className="text-xl sm:text-2xl md:text-3xl font-light leading-relaxed text-foreground/85 italic"
-          style={{ fontFamily: "var(--font-cormorant), serif" }}
-        >
-          <AnimatedQuote text={QUOTE.text} inView={inView} />
-        </blockquote>
+        <div className="text-center md:text-left">
+          <p className="text-sm font-semibold text-[#0071e3] dark:text-primary">Отрывок, который цепляет</p>
 
-        {/* Attribution */}
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.6 }}
-          className="mt-8 flex flex-col items-center gap-1"
-        >
-          <div className="h-px w-12 bg-primary/40 mb-4" />
-          <cite className="not-italic text-sm font-medium text-primary/80">
-            {QUOTE.author}
-          </cite>
-          <span className="text-xs text-muted-foreground">{QUOTE.work}</span>
-        </motion.footer>
+          <AnimatePresence mode="wait">
+            <motion.blockquote
+              key={active.slug}
+              initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
+              animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+              exit={{ opacity: 0, y: -14, filter: "blur(8px)" }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-5 text-balance text-3xl font-semibold leading-[1.08] tracking-[-0.035em] text-foreground sm:text-5xl"
+            >
+              “{active.text}”
+            </motion.blockquote>
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${active.slug}-meta`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={inView ? { opacity: 1, y: 0 } : undefined}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.42 }}
+              className="mt-7"
+            >
+              <p className="text-base font-semibold text-foreground">{active.author}</p>
+              <p className="mt-1 text-sm text-foreground/55 dark:text-white/55">{active.work}</p>
+              <Link
+                href={`/books/${active.slug}`}
+                className="mt-6 inline-flex h-11 items-center rounded-full bg-foreground px-5 text-sm font-semibold text-background transition-transform duration-200 hover:scale-[1.025] active:scale-[0.97] dark:bg-white dark:text-black"
+              >
+                Открыть книгу <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="mt-8 flex justify-center gap-2 md:justify-start" aria-label="Переключить отрывок">
+            {EXCERPTS.map((item, dotIndex) => (
+              <button
+                key={item.slug}
+                type="button"
+                onClick={() => setIndex(dotIndex)}
+                className={`h-2 rounded-full transition-all ${
+                  dotIndex === index ? "w-7 bg-[#0071e3] dark:bg-primary" : "w-2 bg-foreground/20 hover:bg-foreground/35"
+                }`}
+                aria-label={`Показать отрывок: ${item.work}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

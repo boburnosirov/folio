@@ -3,100 +3,142 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import {
-  BookOpen, Globe, Heart, Brain,
-  TrendingUp, Briefcase, Telescope, User, Star
-} from "lucide-react";
+import { BookOpen, Brain, Briefcase, Globe, Heart, Star, Telescope, TrendingUp } from "lucide-react";
+import { BookCover, CoverVariant } from "./BookCover";
 
-const CATEGORIES = [
-  { slug: "russian-classics", name: "Русская классика",       icon: BookOpen,  color: "#1a2d4a", desc: "Толстой, Достоевский, Чехов" },
-  { slug: "world-classics",   name: "Зарубежная классика",    icon: Globe,     color: "#2c1940", desc: "Диккенс, Гюго, Дюма" },
-  { slug: "romance",          name: "Романтика",              icon: Heart,     color: "#3d1414", desc: "Остин, Куприн, Тургенев" },
-  { slug: "philosophy",       name: "Философия",              icon: Brain,     color: "#1a2a1a", desc: "Марк Аврелий, Ницше, Сенека" },
-  { slug: "self-development", name: "Саморазвитие",           icon: TrendingUp,color: "#2d2010", desc: "Наполеон Хилл, Смайлс" },
-  { slug: "business-success", name: "Бизнес и успех",         icon: Briefcase, color: "#1a2d35", desc: "Франклин, Карнеги" },
-  { slug: "science",          name: "Космос и наука",         icon: Telescope, color: "#0f1f3a", desc: "Циолковский, Жюль Верн" },
-  { slug: "uzbek-classics",   name: "Узбекская классика",     icon: Star,      color: "#3a2010", desc: "Навои, Бабур, Чулпан" },
-] as const;
+const CATEGORIES: Array<{
+  slug: string;
+  name: string;
+  desc: string;
+  icon: typeof BookOpen;
+  covers: Array<{ title: string; author: string; variant: CoverVariant }>;
+}> = [
+  {
+    slug: "russian-classics",
+    name: "Художественная литература",
+    desc: "Толстой, Достоевский, Чехов, Гоголь",
+    icon: BookOpen,
+    covers: [
+      { title: "Анна", author: "Толстой", variant: "anna" },
+      { title: "Шинель", author: "Гоголь", variant: "gogol" },
+      { title: "Чехов", author: "Рассказы", variant: "chekhov" },
+    ],
+  },
+  {
+    slug: "world-classics",
+    name: "Зарубежная классика",
+    desc: "Гюго, Остин, Диккенс, Конан Дойл",
+    icon: Globe,
+    covers: [
+      { title: "Гюго", author: "Собор", variant: "hugo" },
+      { title: "Остин", author: "Роман", variant: "austen" },
+      { title: "Холмс", author: "Дойл", variant: "sherlock" },
+    ],
+  },
+  {
+    slug: "romance",
+    name: "Романтика",
+    desc: "Ася, Первая любовь, Джейн Остин",
+    icon: Heart,
+    covers: [
+      { title: "Остин", author: "Джейн", variant: "austen" },
+      { title: "Ася", author: "Тургенев", variant: "chekhov" },
+      { title: "Вертер", author: "Гёте", variant: "hugo" },
+    ],
+  },
+  {
+    slug: "philosophy",
+    name: "Философия и характер",
+    desc: "Марк Аврелий, Сенека, Монтень",
+    icon: Brain,
+    covers: [
+      { title: "Наедине", author: "Аврелий", variant: "marcus" },
+      { title: "Сенека", author: "Письма", variant: "franklin" },
+      { title: "Монтень", author: "Опыты", variant: "gogol" },
+    ],
+  },
+  {
+    slug: "self-development",
+    name: "Саморазвитие",
+    desc: "Хилл, Смайлс, Марден, Уоттлз",
+    icon: TrendingUp,
+    covers: [
+      { title: "Self Help", author: "Smiles", variant: "franklin" },
+      { title: "Think", author: "Hill", variant: "marcus" },
+      { title: "Science", author: "Wattles", variant: "verne" },
+    ],
+  },
+  {
+    slug: "business-success",
+    name: "Бизнес и успех",
+    desc: "Франклин, Карнеги и классические эссе",
+    icon: Briefcase,
+    covers: [
+      { title: "Авто", author: "Франклин", variant: "franklin" },
+      { title: "Успех", author: "Карнеги", variant: "marcus" },
+      { title: "Эссе", author: "Классика", variant: "hugo" },
+    ],
+  },
+  {
+    slug: "science",
+    name: "Космос и наука",
+    desc: "Циолковский, Верн, Фламмарион",
+    icon: Telescope,
+    covers: [
+      { title: "Верн", author: "Жюль", variant: "verne" },
+      { title: "Космос", author: "Циолковский", variant: "navai" },
+      { title: "Звёзды", author: "Фламмарион", variant: "hugo" },
+    ],
+  },
+  {
+    slug: "uzbek-classics",
+    name: "Узбекская классика",
+    desc: "Навои, Бабур, Чулпан, Мукими",
+    icon: Star,
+    covers: [
+      { title: "Навои", author: "Алишер", variant: "navai" },
+      { title: "Бабур", author: "Наме", variant: "babur" },
+      { title: "Чулпан", author: "Классика", variant: "franklin" },
+    ],
+  },
+];
 
-// Mock preview covers per category
-const COVER_COLORS: Record<string, string[]> = {
-  "russian-classics":  ["#1a2d4a", "#223a5a", "#152438"],
-  "world-classics":    ["#2c1940", "#381f52", "#220f33"],
-  "romance":           ["#3d1414", "#521c1c", "#2d0f0f"],
-  "philosophy":        ["#1a2a1a", "#233523", "#122012"],
-  "self-development":  ["#2d2010", "#3d2a15", "#1f1508"],
-  "business-success":  ["#1a2d35", "#22384a", "#102028"],
-  "science":           ["#0f1f3a", "#152a52", "#0a1528"],
-  "uzbek-classics":    ["#3a2010", "#4d2a15", "#2a1508"],
-};
-
-interface CategoryCardProps {
-  category: typeof CATEGORIES[number];
-  index: number;
-  inView: boolean;
-}
-
-function CategoryCard({ category, index, inView }: CategoryCardProps) {
+function CategoryCard({ category, index, inView }: { category: (typeof CATEGORIES)[number]; index: number; inView: boolean }) {
   const Icon = category.icon;
-  const covers = COVER_COLORS[category.slug] ?? ["#222", "#333", "#444"];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 36 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.55, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 26 }}
+      animate={inView ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.55, delay: index * 0.055, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Link href={`/categories/${category.slug}`} className="group block">
-        <div
-          className="relative overflow-hidden rounded-xl border border-border/30 bg-card/60 p-5
-                     transition-all duration-300 ease-out
-                     hover:-translate-y-2 hover:border-primary/30
-                     hover:shadow-xl hover:shadow-primary/10 hover:bg-card"
-        >
-          {/* Icon + title */}
-          <div className="flex items-start gap-3 mb-3">
-            <div
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-300"
-              style={{ background: `${category.color}88` }}
-            >
-              <Icon className="h-4 w-4 text-primary/80" />
+      <Link href={`/categories/${category.slug}`} className="group block h-full">
+        <div className="relative h-full overflow-hidden rounded-[24px] border border-black/6 bg-white/70 p-5 shadow-[0_18px_55px_rgba(0,0,0,.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:bg-white hover:shadow-[0_24px_70px_rgba(0,0,0,.1)] dark:border-white/10 dark:bg-white/[0.055] dark:hover:bg-white/[0.085]">
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.045] text-foreground dark:bg-white/10">
+              <Icon className="h-4 w-4" />
             </div>
-            <div>
-              <h3
-                className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors duration-200"
-                style={{ fontFamily: "var(--font-cormorant), serif" }}
-              >
-                {category.name}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">{category.desc}</p>
-            </div>
+            <span className="text-[11px] font-medium text-foreground/45">0{index + 1}</span>
           </div>
 
-          {/* Fan-out mini covers */}
-          <div className="relative h-10 mt-2 overflow-visible">
-            {covers.map((color, ci) => (
+          <div className="relative mb-6 h-24">
+            {category.covers.map((cover, coverIndex) => (
               <div
-                key={ci}
-                className="absolute bottom-0 rounded-sm border border-white/10 transition-all duration-300"
+                key={cover.title}
+                className="absolute bottom-0 transition-transform duration-300 ease-out group-hover:translate-y-[-6px]"
                 style={{
-                  width: 24,
-                  height: 36,
-                  background: `linear-gradient(135deg, ${color} 0%, ${color}bb 100%)`,
-                  left: ci * 22,
-                  transform: `rotate(${(ci - 1) * 5}deg)`,
-                  transformOrigin: "bottom center",
-                  zIndex: ci,
+                  left: `calc(50% - 42px + ${coverIndex * 28}px)`,
+                  zIndex: 3 - coverIndex,
+                  transform: `rotate(${(coverIndex - 1) * 8}deg)`,
                 }}
-              />
+              >
+                <BookCover {...cover} size="xs" className="shadow-xl shadow-black/15" />
+              </div>
             ))}
-            {/* Hover: fan out */}
-            <style>{`
-              .group:hover .fan-${category.slug.replace(/-/g, "_")} {
-                transform: rotate(0deg) translateY(-4px) !important;
-              }
-            `}</style>
           </div>
+
+          <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{category.name}</h3>
+          <p className="mt-2 min-h-10 text-sm leading-5 text-foreground/58 dark:text-white/58">{category.desc}</p>
         </div>
       </Link>
     </motion.div>
@@ -105,31 +147,26 @@ function CategoryCard({ category, index, inView }: CategoryCardProps) {
 
 export function CategoriesSection() {
   const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section ref={ref} className="py-24 px-6">
+    <section ref={ref} className="relative px-6 py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="mb-14 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: 0.55 }}
+          className="mb-12"
         >
-          <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary/60 mb-3">
-            Разделы
-          </p>
-          <h2
-            className="text-4xl sm:text-5xl font-semibold text-foreground"
-            style={{ fontFamily: "var(--font-cormorant), serif" }}
-          >
-            Категории
+          <p className="text-sm font-semibold text-[#0071e3] dark:text-primary">Разделы библиотеки</p>
+          <h2 className="mt-2 max-w-2xl text-4xl font-semibold tracking-[-0.035em] text-foreground sm:text-6xl">
+            Выберите настроение, не только жанр.
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-          {CATEGORIES.map((cat, i) => (
-            <CategoryCard key={cat.slug} category={cat} index={i} inView={inView} />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {CATEGORIES.map((category, index) => (
+            <CategoryCard key={category.slug} category={category} index={index} inView={inView} />
           ))}
         </div>
       </div>

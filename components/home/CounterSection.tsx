@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 
-// ─── Particle canvas ─────────────────────────────────────────
 function GoldParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -20,16 +19,16 @@ function GoldParticles() {
     resize();
     window.addEventListener("resize", resize);
 
-    const particles = Array.from({ length: 55 }, () => ({
+    const particles = Array.from({ length: 42 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height + canvas.height,
-      size: Math.random() * 1.6 + 0.4,
-      speedY: -(Math.random() * 0.35 + 0.1),
-      speedX: (Math.random() - 0.5) * 0.15,
-      opacity: Math.random() * 0.45 + 0.15,
+      size: Math.random() * 1.4 + 0.35,
+      speedY: -(Math.random() * 0.25 + 0.08),
+      speedX: (Math.random() - 0.5) * 0.12,
+      opacity: Math.random() * 0.28 + 0.08,
     }));
 
-    let raf: number;
+    let raf = 0;
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach((p) => {
@@ -54,16 +53,9 @@ function GoldParticles() {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
-    />
-  );
+  return <canvas ref={canvasRef} aria-hidden className="absolute inset-0 h-full w-full pointer-events-none opacity-60" />;
 }
 
-// ─── Animated counter ────────────────────────────────────────
 function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
@@ -76,7 +68,7 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
       ([entry]) => {
         if (entry.isIntersecting && !started.current) {
           started.current = true;
-          const duration = 1800;
+          const duration = 1500;
           const start = Date.now();
           const tick = () => {
             const elapsed = Date.now() - start;
@@ -102,55 +94,36 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
   );
 }
 
-// ─── Stats data ──────────────────────────────────────────────
 const STATS = [
   { value: 500, suffix: "+", label: "книг в библиотеке" },
-  { value: 8,   suffix: "",  label: "категорий" },
-  { value: 42,  suffix: "",  label: "автора" },
-  { value: 3,   suffix: " века", label: "литературы" },
+  { value: 8, suffix: "", label: "категорий" },
+  { value: 42, suffix: "", label: "автора" },
+  { value: 3, suffix: " века", label: "литературы" },
 ];
 
-// ─── Section ─────────────────────────────────────────────────
 export function CounterSection() {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section
-      ref={ref}
-      className="relative overflow-hidden py-20"
-    >
+    <section ref={ref} className="relative overflow-hidden px-6 py-20">
       <GoldParticles />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(212,168,67,.09),transparent_48%)]" />
 
-      {/* Subtle radial glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 100% at 50% 50%, oklch(0.72 0.13 78 / 0.04) 0%, transparent 70%)",
-        }}
-      />
-
-      <div className="relative mx-auto max-w-5xl px-6">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
-          {STATS.map((stat, i) => (
+      <div className="relative mx-auto max-w-5xl">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {STATS.map((stat, index) => (
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 32 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="flex flex-col items-center gap-2 text-center"
+              key={stat.label}
+              initial={{ opacity: 0, y: 24 }}
+              animate={inView ? { opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-[24px] border border-black/6 bg-white/55 px-4 py-8 text-center shadow-[0_18px_50px_rgba(0,0,0,.045)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.045]"
             >
-              <span
-                className="text-5xl sm:text-6xl font-semibold tabular-nums text-primary"
-                style={{ fontFamily: "var(--font-cormorant), serif" }}
-              >
+              <span className="font-heading text-5xl font-semibold tabular-nums tracking-[-0.04em] text-[#0071e3] dark:text-primary sm:text-6xl">
                 <AnimatedNumber target={stat.value} suffix={stat.suffix} />
               </span>
-              <span className="text-sm text-muted-foreground tracking-wide">
-                {stat.label}
-              </span>
+              <span className="mt-2 block text-sm text-foreground/55 dark:text-white/55">{stat.label}</span>
             </motion.div>
           ))}
         </div>
