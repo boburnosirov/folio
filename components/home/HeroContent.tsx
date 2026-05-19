@@ -129,11 +129,11 @@ export function HeroContent({ mouseRef: _mouseRef }: HeroContentProps) {
           <Link
             href="/register"
             className={cn(
-              buttonVariants({ variant: "outline", size: "lg" }),
-              "px-8 py-3 text-sm font-medium",
-              "border-white/15 bg-white/5 text-foreground/80",
-              "hover:bg-white/10 hover:border-white/25 hover:text-foreground",
-              "backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5"
+              "inline-flex items-center justify-center rounded-lg px-8 py-3 text-sm font-medium",
+              "border border-white/25 bg-white/8 text-white/90",
+              "hover:bg-white/14 hover:border-white/40 hover:text-white",
+              "backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5",
+              "shadow-sm"
             )}
           >
             Создать аккаунт

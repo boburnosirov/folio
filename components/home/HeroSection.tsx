@@ -70,19 +70,13 @@ export function HeroSection() {
         )}
       </div>
 
-      {/* Gradient overlay — darkens edges for text legibility */}
+      {/* Vignette — darkens far edges for text legibility, keeps centre open */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 60% 80% at 50% 50%, transparent 0%, #0b0b12 85%)",
+            "radial-gradient(ellipse 75% 85% at 50% 45%, transparent 0%, rgba(11,11,18,0.65) 100%)",
         }}
-        aria-hidden
-      />
-      {/* Bottom fade */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, transparent, #0b0b12)" }}
         aria-hidden
       />
 

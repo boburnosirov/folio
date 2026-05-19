@@ -118,7 +118,7 @@ export function CounterSection() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden py-20 border-y border-border/30"
+      className="relative overflow-hidden py-20"
     >
       <GoldParticles />
 
