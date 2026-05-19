@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type CoverVariant =
@@ -154,6 +155,7 @@ export function BookCover({
 }: BookCoverProps) {
   const style = COVER_STYLES[variant];
   const coverImage = imageUrl ?? REAL_COVERS[variant];
+  const [imageFailed, setImageFailed] = useState(false);
 
   if (back) {
     return (
@@ -181,13 +183,29 @@ export function BookCover({
         className
       )}
     >
-      <img
-        src={coverImage}
-        alt={`${title} — ${author}`}
-        className="absolute inset-0 h-full w-full bg-white object-cover"
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
+      {!imageFailed ? (
+        <img
+          src={coverImage}
+          alt={`${title} - ${author}`}
+          className="absolute inset-0 h-full w-full bg-white object-cover"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <>
+          <div className="absolute inset-y-0 left-0 w-[12%] bg-black/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_35%_18%,rgba(255,255,255,.32),transparent_32%),linear-gradient(to_bottom,rgba(255,255,255,.18),transparent_34%,rgba(0,0,0,.28))]" />
+          <CoverMotif motif={style.motif} accent={style.accent} />
+          <div className="absolute inset-x-3 top-4 text-center">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-white/60">{author}</p>
+          </div>
+          <div className="absolute inset-x-3 bottom-4 text-center">
+            <p className="font-heading text-[13px] font-semibold leading-[1.05] text-white drop-shadow-sm">{title}</p>
+          </div>
+          <div className="absolute inset-x-4 top-[24%] h-px" style={{ background: style.accent, opacity: 0.65 }} />
+        </>
+      )}
       <div className="absolute inset-y-0 left-0 w-[10%] bg-gradient-to-r from-black/30 to-transparent mix-blend-multiply" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,.16),transparent_26%,rgba(0,0,0,.10))]" />
     </div>

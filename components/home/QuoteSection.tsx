@@ -1,60 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { BookCover, CoverVariant } from "./BookCover";
+import { BookCover } from "./BookCover";
+import { EXCERPTS } from "./homeData";
 
-const EXCERPTS: Array<{
-  text: string;
-  author: string;
-  work: string;
-  slug: string;
-  variant: CoverVariant;
-  imageUrl: string;
-}> = [
-  {
-    text: "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему.",
-    author: "Лев Толстой",
-    work: "Анна Каренина",
-    slug: "anna-karenina",
-    variant: "anna",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
-  },
-  {
-    text: "Он был задавлен бедностью; но стеснённое положение перестало в последнее время тяготить его.",
-    author: "Фёдор Достоевский",
-    work: "Преступление и наказание",
-    slug: "prestuplenie-i-nakazanie",
-    variant: "crime",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
-  },
-  {
-    text: "Небо было в звёздах, и каждая звезда казалась живой точкой огромного молчаливого пространства.",
-    author: "Камиль Фламмарион",
-    work: "Популярная астрономия",
-    slug: "populyarnaya-astronomiya",
-    variant: "verne",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
-  },
-  {
-    text: "Богатство приходит к тому, кто действует в определённом образе мышления и делает это последовательно.",
-    author: "Уоллес Уоттлз",
-    work: "Наука стать богатым",
-    slug: "the-science-of-getting-rich",
-    variant: "franklin",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
-  },
-  {
-    text: "Менинг кўнглим гулшан истар, гулшан ичра ёр истар.",
-    author: "Алишер Навои",
-    work: "Лирика",
-    slug: "alisher-navai-lyrics",
-    variant: "navai",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
-  },
-];
+const ROTATION_MS = 20000;
+const BATCH_SIZE = 5;
 
 export function QuoteSection() {
   const ref = useRef<HTMLElement>(null);
@@ -62,12 +16,18 @@ export function QuoteSection() {
   const reduceMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const active = EXCERPTS[index];
+  const batchIndex = Math.floor(index / BATCH_SIZE);
+  const batchStart = batchIndex * BATCH_SIZE;
+  const batchItems = useMemo(
+    () => EXCERPTS.slice(batchStart, batchStart + BATCH_SIZE),
+    [batchStart]
+  );
 
   useEffect(() => {
     if (reduceMotion) return;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % EXCERPTS.length);
-    }, 22000);
+    }, ROTATION_MS);
     return () => window.clearInterval(timer);
   }, [reduceMotion]);
 
@@ -99,7 +59,12 @@ export function QuoteSection() {
         </div>
 
         <div className="text-center md:text-left">
-          <p className="text-sm font-semibold text-[#0071e3] dark:text-primary">Отрывок, который цепляет</p>
+          <p className="text-sm font-semibold text-[#0071e3] dark:text-primary">
+            Отрывок, который цепляет
+          </p>
+          <p className="mt-2 text-xs font-medium uppercase tracking-[0.22em] text-foreground/42 dark:text-white/42">
+            Подборка {batchIndex + 1} из {Math.ceil(EXCERPTS.length / BATCH_SIZE)} · {active.batch}
+          </p>
 
           <AnimatePresence mode="wait">
             <motion.blockquote
@@ -135,17 +100,22 @@ export function QuoteSection() {
           </AnimatePresence>
 
           <div className="mt-8 flex justify-center gap-2 md:justify-start" aria-label="Переключить отрывок">
-            {EXCERPTS.map((item, dotIndex) => (
-              <button
-                key={item.slug}
-                type="button"
-                onClick={() => setIndex(dotIndex)}
-                className={`h-2 rounded-full transition-all ${
-                  dotIndex === index ? "w-7 bg-[#0071e3] dark:bg-primary" : "w-2 bg-foreground/20 hover:bg-foreground/35"
-                }`}
-                aria-label={`Показать отрывок: ${item.work}`}
-              />
-            ))}
+            {batchItems.map((item, dotIndex) => {
+              const globalIndex = batchStart + dotIndex;
+              return (
+                <button
+                  key={item.slug}
+                  type="button"
+                  onClick={() => setIndex(globalIndex)}
+                  className={`h-2 rounded-full transition-all ${
+                    globalIndex === index
+                      ? "w-7 bg-[#0071e3] dark:bg-primary"
+                      : "w-2 bg-foreground/20 hover:bg-foreground/35"
+                  }`}
+                  aria-label={`Показать отрывок: ${item.work}`}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

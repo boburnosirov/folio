@@ -5,21 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { BookCover, CoverVariant } from "./BookCover";
 import { cn } from "@/lib/utils";
-
-const IMG = {
-  anna: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
-  crime: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
-  babur: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
-  austen: "https://commons.wikimedia.org/wiki/Special:FilePath/PrideAndPrejudiceTitlePage.jpg?width=700",
-  sherlock: "https://commons.wikimedia.org/wiki/Special:FilePath/Adventures_of_sherlock_holmes.jpg?width=700",
-  navai: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
-  verne: "https://commons.wikimedia.org/wiki/Special:FilePath/Verne_Tour_du_Monde.jpg?width=700",
-  astronomy: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
-  poorRichard: "https://commons.wikimedia.org/wiki/Special:FilePath/Poor_Richard.jpg?width=700",
-  scienceRich: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
-  meditations: "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
-  janeEyre: "https://commons.wikimedia.org/wiki/Special:FilePath/Jane_Eyre_title_page.jpg?width=700",
-};
+import { COVERS } from "./homeData";
 
 const HERO_BOOKS: Array<{
   title: string;
@@ -36,7 +22,7 @@ const HERO_BOOKS: Array<{
     title: "Анна Каренина",
     author: "Л. Толстой",
     variant: "anna",
-    imageUrl: IMG.anna,
+    imageUrl: COVERS.anna,
     size: "xl",
     className: "-left-14 top-[18%] hidden lg:block",
     rotate: -13,
@@ -46,7 +32,7 @@ const HERO_BOOKS: Array<{
     title: "Преступление и наказание",
     author: "Ф. Достоевский",
     variant: "crime",
-    imageUrl: IMG.crime,
+    imageUrl: COVERS.crime,
     size: "lg",
     className: "left-[10%] top-[12%] hidden md:block",
     rotate: 8,
@@ -56,7 +42,7 @@ const HERO_BOOKS: Array<{
     title: "Бабур-наме",
     author: "Бабур",
     variant: "babur",
-    imageUrl: IMG.babur,
+    imageUrl: COVERS.babur,
     size: "lg",
     className: "right-[12%] top-[10%] hidden md:block",
     rotate: -7,
@@ -66,7 +52,7 @@ const HERO_BOOKS: Array<{
     title: "Популярная астрономия",
     author: "К. Фламмарион",
     variant: "verne",
-    imageUrl: IMG.astronomy,
+    imageUrl: COVERS.astronomy,
     size: "md",
     className: "right-[-2rem] top-[24%] hidden sm:block",
     rotate: 14,
@@ -76,7 +62,7 @@ const HERO_BOOKS: Array<{
     title: "Self-Help",
     author: "С. Смайлс",
     variant: "franklin",
-    imageUrl: IMG.scienceRich,
+    imageUrl: COVERS.selfHelp,
     size: "md",
     className: "left-[18%] bottom-[14%] hidden sm:block",
     rotate: -9,
@@ -86,7 +72,7 @@ const HERO_BOOKS: Array<{
     title: "Вокруг света",
     author: "Ж. Верн",
     variant: "verne",
-    imageUrl: IMG.verne,
+    imageUrl: COVERS.verneWorld,
     size: "lg",
     className: "right-[18%] bottom-[11%] hidden md:block",
     rotate: 10,
@@ -96,7 +82,7 @@ const HERO_BOOKS: Array<{
     title: "Размышления",
     author: "Марк Аврелий",
     variant: "marcus",
-    imageUrl: IMG.meditations,
+    imageUrl: COVERS.meditations,
     size: "sm",
     className: "left-[4%] bottom-[7%]",
     rotate: 12,

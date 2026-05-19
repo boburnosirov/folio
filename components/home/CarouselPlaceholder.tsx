@@ -4,40 +4,8 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { ArrowRight, Layers } from "lucide-react";
-import { BookCover, CoverVariant } from "./BookCover";
-
-const MONTH_BOOKS: Array<{ title: string; author: string; variant: CoverVariant; imageUrl: string }> = [
-  {
-    title: "Анна Каренина",
-    author: "Толстой",
-    variant: "anna",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
-  },
-  {
-    title: "Популярная астрономия",
-    author: "Фламмарион",
-    variant: "verne",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
-  },
-  {
-    title: "Бабур-наме",
-    author: "Бабур",
-    variant: "babur",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
-  },
-  {
-    title: "Poor Richard",
-    author: "Франклин",
-    variant: "franklin",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Poor_Richard.jpg?width=700",
-  },
-  {
-    title: "Размышления",
-    author: "Марк Аврелий",
-    variant: "marcus",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
-  },
-];
+import { BookCover } from "./BookCover";
+import { MONTH_BOOKS } from "./homeData";
 
 function PillLink({ href, children, primary = false }: { href: string; children: React.ReactNode; primary?: boolean }) {
   return (
@@ -73,7 +41,7 @@ export function CarouselPlaceholder() {
               Книги месяца
             </h2>
             <p className="mt-4 max-w-xl text-base leading-7 text-foreground/58 dark:text-white/58">
-              В подборке не только романы: классика, наука, узбекское наследие, философия и практическая литература.
+              В подборке смешаны жанры: литература, наука, узбекское наследие, бизнес и философия.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-foreground/48">

@@ -66,9 +66,11 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-black/6 pt-6 dark:border-white/10 sm:flex-row">
           <p className="text-xs text-foreground/45 dark:text-white/45">
-            © {new Date().getFullYear()} Folio. Все тексты — из общественного достояния.
+            © {new Date().getFullYear()} Folio. Все тексты - из общественного достояния.
           </p>
-          <p className="text-xs text-foreground/45 dark:text-white/45">Сделано для читателей СНГ и Узбекистана</p>
+          <p className="text-xs text-foreground/45 dark:text-white/45">
+            Сделано для читателей СНГ и Узбекистана
+          </p>
         </div>
       </div>
     </footer>
