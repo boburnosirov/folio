@@ -1,69 +1,40 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { BookOpen, BookMarked, LogOut, Mail, Clock } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useUser } from "@/hooks/useUser";
+import { BookOpen, BookMarked, LogOut, Mail, Clock, Trophy } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { ProfileLogout } from "./ProfileLogout";
 
-type LocalProgress = { slug: string; page: number; total?: number };
+export default async function ProfilePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/profile");
 
-function getInitials(email: string) {
-  return email.slice(0, 2).toUpperCase();
-}
+  // Fetch reading progress with book info
+  const { data: progressRows } = await supabase
+    .from("reading_progress")
+    .select("position, updated_at, books(id, slug, title, title_ru, cover_url, authors(name, name_ru))")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false })
+    .limit(10);
 
-function getLocalProgress(): LocalProgress[] {
-  const items: LocalProgress[] = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith("folio_read_")) {
-        const slug = key.replace("folio_read_", "");
-        const val = JSON.parse(localStorage.getItem(key) ?? "{}");
-        if (typeof val.page === "number") {
-          items.push({ slug, page: val.page });
-        }
-      }
-    }
-  } catch {}
-  return items;
-}
+  // Fetch bookmarks with book info
+  const { data: bookmarkRows } = await supabase
+    .from("user_bookmarks")
+    .select("created_at, books(id, slug, title, title_ru, cover_url, authors(name, name_ru))")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
 
-export default function ProfilePage() {
-  const user = useUser();
-  const router = useRouter();
-  const [progress, setProgress] = useState<LocalProgress[]>([]);
-
-  useEffect(() => {
-    setProgress(getLocalProgress());
-  }, []);
-
-  // Redirect if not logged in (middleware also handles this)
-  useEffect(() => {
-    if (user === null) router.replace("/login");
-  }, [user, router]);
-
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  };
-
-  if (user === undefined || user === null) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground/60" />
-      </div>
-    );
-  }
+  const progress = (progressRows ?? []).filter((r) => r.books);
+  const bookmarks = (bookmarkRows ?? []).filter((r) => r.books);
 
   const joinedAt = new Date(user.created_at).toLocaleDateString("ru-RU", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    year: "numeric", month: "long", day: "numeric",
   });
+
+  function getInitials(email: string) {
+    return email.slice(0, 2).toUpperCase();
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,40 +60,27 @@ export default function ProfilePage() {
               </span>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-full border border-foreground/12 px-3 py-1.5 text-xs text-foreground/50 transition-colors hover:border-red-500/30 hover:text-red-500"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Выйти
-          </button>
+          <ProfileLogout />
         </div>
 
         {/* Stats */}
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid grid-cols-3 gap-4">
           {[
             { label: "Читаю сейчас", value: progress.length, icon: BookOpen },
-            { label: "Закладки", value: 0, icon: BookMarked },
-            { label: "Прочитано", value: 0, icon: Clock },
+            { label: "Закладки", value: bookmarks.length, icon: BookMarked },
+            { label: "Всего книг", value: progress.length + bookmarks.length, icon: Trophy },
           ].map(({ label, value, icon: Icon }) => (
-            <div
-              key={label}
-              className="rounded-2xl border border-foreground/8 bg-foreground/[0.03] p-4"
-            >
+            <div key={label} className="rounded-2xl border border-foreground/8 bg-foreground/[0.03] p-4">
               <Icon className="mb-2 h-4 w-4 text-foreground/35" />
-              <p className="text-2xl font-semibold tabular-nums text-foreground">
-                {value}
-              </p>
+              <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
               <p className="text-xs text-foreground/45">{label}</p>
             </div>
           ))}
         </div>
 
         {/* Reading progress */}
-        <section className="mb-8">
-          <h2 className="mb-4 text-base font-semibold text-foreground">
-            Продолжить чтение
-          </h2>
+        <section className="mb-10">
+          <h2 className="mb-4 text-base font-semibold text-foreground">Продолжить чтение</h2>
           {progress.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-foreground/12 py-10 text-center">
               <BookOpen className="mx-auto mb-3 h-8 w-8 text-foreground/20" />
@@ -136,38 +94,78 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {progress.map(({ slug, page }) => (
-                <Link
-                  key={slug}
-                  href={`/read/${slug}`}
-                  className="group flex items-center justify-between rounded-2xl border border-foreground/8 bg-foreground/[0.03] px-5 py-4 transition-colors hover:bg-foreground/[0.06]"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground/80 group-hover:text-foreground">
-                      {slug.replace(/-/g, " ")}
-                    </p>
-                    <p className="mt-0.5 text-xs text-foreground/40">
-                      Страница {page + 1}
-                    </p>
-                  </div>
-                  <span className="ml-4 shrink-0 text-xs text-[#0071e3]">
-                    Продолжить →
-                  </span>
-                </Link>
-              ))}
+              {progress.map((row) => {
+                const book = row.books as any;
+                const title = book.title_ru ?? book.title;
+                const author = book.authors ? (book.authors.name_ru ?? book.authors.name) : null;
+                const page = parseInt(row.position, 10) + 1;
+                return (
+                  <Link
+                    key={book.slug}
+                    href={`/read/${book.slug}`}
+                    className="group flex items-center gap-4 rounded-2xl border border-foreground/8 bg-foreground/[0.03] px-4 py-3 transition-colors hover:bg-foreground/[0.06]"
+                  >
+                    {book.cover_url && (
+                      <img
+                        src={book.cover_url}
+                        alt={title}
+                        className="h-14 w-10 shrink-0 rounded-lg object-cover"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-foreground/80 group-hover:text-foreground">{title}</p>
+                      {author && <p className="mt-0.5 truncate text-xs text-foreground/45">{author}</p>}
+                      <p className="mt-1 text-xs text-foreground/35">Страница {page}</p>
+                    </div>
+                    <span className="ml-2 shrink-0 text-xs text-[#0071e3]">Продолжить →</span>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
 
-        {/* Bookmarks placeholder */}
-        <section id="bookmarks">
-          <h2 className="mb-4 text-base font-semibold text-foreground">
-            Закладки
-          </h2>
-          <div className="rounded-2xl border border-dashed border-foreground/12 py-10 text-center">
-            <BookMarked className="mx-auto mb-3 h-8 w-8 text-foreground/20" />
-            <p className="text-sm text-foreground/40">Закладок пока нет</p>
-          </div>
+        {/* Bookmarks */}
+        <section>
+          <h2 className="mb-4 text-base font-semibold text-foreground">Закладки</h2>
+          {bookmarks.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-foreground/12 py-10 text-center">
+              <BookMarked className="mx-auto mb-3 h-8 w-8 text-foreground/20" />
+              <p className="text-sm text-foreground/40">Закладок пока нет</p>
+              <p className="mt-1 text-xs text-foreground/30">
+                Нажмите «В закладки» на странице книги
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {bookmarks.map((row) => {
+                const book = row.books as any;
+                const title = book.title_ru ?? book.title;
+                const author = book.authors ? (book.authors.name_ru ?? book.authors.name) : null;
+                return (
+                  <Link
+                    key={book.slug}
+                    href={`/books/${book.slug}`}
+                    className="group flex flex-col gap-2"
+                  >
+                    <div className="aspect-[2/3] overflow-hidden rounded-xl border border-foreground/8 bg-foreground/[0.04] shadow-sm transition-transform group-hover:scale-[1.02]">
+                      {book.cover_url ? (
+                        <img src={book.cover_url} alt={title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center p-3 text-center">
+                          <span className="text-xs font-medium text-foreground/50 leading-tight">{title}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground line-clamp-2 leading-snug">{title}</p>
+                      {author && <p className="mt-0.5 text-xs text-foreground/45 truncate">{author}</p>}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
     </div>

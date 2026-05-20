@@ -20,6 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { BookFull } from "@/lib/types/database";
+import { createClient } from "@/lib/supabase/client";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const WORDS_PER_PAGE = 1200;
@@ -33,7 +34,6 @@ const FONT_FAMILIES = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function splitIntoPages(text: string, wordsPerPage: number): string[] {
-  // Split on double newlines to preserve paragraph structure
   const paragraphs = text
     .split(/\n{2,}/)
     .map((p) => p.replace(/\n/g, " ").trim())
@@ -96,7 +96,6 @@ function SettingsPanel({
         </button>
       </div>
 
-      {/* Font size */}
       <div className="mb-4">
         <p className="mb-2 text-xs text-foreground/45">Размер шрифта</p>
         <div className="flex items-center gap-3">
@@ -116,7 +115,6 @@ function SettingsPanel({
         </div>
       </div>
 
-      {/* Font family */}
       <div>
         <p className="mb-2 text-xs text-foreground/45">Шрифт</p>
         <div className="flex gap-2">
@@ -146,42 +144,88 @@ export default function ReaderClient({ book }: { book: BookFull }) {
     ? (book.authors.name_ru ?? book.authors.name)
     : null;
 
-  // Text loading state
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [pages, setPages] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
-  // Reading preferences
   const [fontSize, setFontSize] = useState(18);
   const [fontIndex, setFontIndex] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Anonymous progress banner
   const [showBanner, setShowBanner] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Restore saved page ──
+  // ── Check auth + restore saved page ──
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY(book.slug));
-      if (saved) {
-        const { page } = JSON.parse(saved) as { page: number };
-        if (typeof page === "number") setCurrentPage(page);
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+
+      if (user) {
+        // Try to load progress from Supabase first
+        const { data } = await supabase
+          .from("reading_progress")
+          .select("position")
+          .eq("user_id", user.id)
+          .eq("book_id", book.id)
+          .limit(1);
+        if (data && data.length > 0) {
+          const page = parseInt(data[0].position, 10);
+          if (!isNaN(page)) {
+            setCurrentPage(page);
+            setProgressLoaded(true);
+            return;
+          }
+        }
       }
-    } catch {}
-    // Show banner after 5 s if not logged in (we check lazily)
+
+      // Fallback to localStorage
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY(book.slug));
+        if (saved) {
+          const { page } = JSON.parse(saved) as { page: number };
+          if (typeof page === "number") setCurrentPage(page);
+        }
+      } catch {}
+      setProgressLoaded(true);
+    });
+
     const t = setTimeout(() => setShowBanner(true), 5000);
     return () => clearTimeout(t);
-  }, [book.slug]);
+  }, [book.slug, book.id]);
 
-  // ── Save page on change ──
+  // ── Save page on change (debounced) ──
   useEffect(() => {
+    if (!progressLoaded) return;
+
+    // Always save to localStorage
     try {
       localStorage.setItem(STORAGE_KEY(book.slug), JSON.stringify({ page: currentPage }));
     } catch {}
-  }, [book.slug, currentPage]);
+
+    // Debounce Supabase save
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from("reading_progress").upsert({
+        user_id: user.id,
+        book_id: book.id,
+        position: String(currentPage),
+        updated_at: new Date().toISOString(),
+      });
+    }, 1500);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [book.slug, book.id, currentPage, progressLoaded]);
 
   // ── Scroll to top on page change ──
   useEffect(() => {
@@ -296,7 +340,6 @@ export default function ReaderClient({ book }: { book: BookFull }) {
         className="flex-1 overflow-y-auto px-4 py-10 sm:px-6"
       >
         <div className="mx-auto max-w-[680px]">
-          {/* Loading */}
           {status === "loading" && (
             <div className="flex flex-col items-center gap-4 py-20 text-foreground/40">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -304,7 +347,6 @@ export default function ReaderClient({ book }: { book: BookFull }) {
             </div>
           )}
 
-          {/* Error / no Gutenberg ID */}
           {status === "error" && (
             <div className="flex flex-col items-center gap-4 py-20 text-center">
               <AlertCircle className="h-10 w-10 text-foreground/30" />
@@ -330,7 +372,6 @@ export default function ReaderClient({ book }: { book: BookFull }) {
             </div>
           )}
 
-          {/* Book text */}
           {status === "ok" && (
             <AnimatePresence mode="wait" custom={direction}>
               <motion.article
@@ -400,7 +441,7 @@ export default function ReaderClient({ book }: { book: BookFull }) {
       )}
 
       {/* ── Anonymous progress banner ── */}
-      {showBanner && status === "ok" && (
+      {showBanner && status === "ok" && !isLoggedIn && (
         <div className="fixed bottom-20 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-foreground/10 bg-background/95 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
           <button
             onClick={() => setShowBanner(false)}
@@ -414,7 +455,7 @@ export default function ReaderClient({ book }: { book: BookFull }) {
           </p>
           <div className="mt-3 flex gap-2">
             <Link
-              href="/auth/login"
+              href="/login"
               className="flex-1 rounded-full bg-[#0071e3] px-3 py-1.5 text-center text-xs font-semibold text-white transition-colors hover:bg-[#0077ed]"
             >
               Войти

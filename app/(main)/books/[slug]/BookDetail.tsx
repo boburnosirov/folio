@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Download, Calendar, Globe } from "lucide-react";
-import type { BookFull } from "@/lib/types/database";
+import type { BookFull, BookWithAuthor } from "@/lib/types/database";
+import { BookmarkButton } from "@/components/books/BookmarkButton";
+import { RelatedBooks } from "@/components/books/RelatedBooks";
 
 const LANG_NAMES: Record<string, string> = {
   ru: "Русский", en: "English", uz: "Ўзбекча",
@@ -16,7 +18,14 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as any },
 });
 
-export function BookDetail({ book }: { book: BookFull }) {
+interface Props {
+  book: BookFull;
+  relatedBooks: BookWithAuthor[];
+  isBookmarked: boolean;
+  isLoggedIn: boolean;
+}
+
+export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Props) {
   const title = book.title_ru ?? book.title;
   const authorName = book.authors ? (book.authors.name_ru ?? book.authors.name) : null;
 
@@ -69,6 +78,15 @@ export function BookDetail({ book }: { book: BookFull }) {
                 <BookOpen className="h-4 w-4" />
                 Читать онлайн
               </Link>
+            </motion.div>
+
+            <motion.div {...fade(0.23)}>
+              <BookmarkButton
+                bookId={book.id}
+                bookSlug={book.slug}
+                initialBookmarked={isBookmarked}
+                isLoggedIn={isLoggedIn}
+              />
             </motion.div>
 
             {downloads.length > 0 && (
@@ -138,6 +156,11 @@ export function BookDetail({ book }: { book: BookFull }) {
                   Рекомендуем
                 </span>
               )}
+              {book.read_count > 0 && (
+                <span className="rounded-full border border-foreground/10 bg-foreground/[0.04] px-3 py-1 text-xs text-foreground/55">
+                  {book.read_count.toLocaleString("ru")} читателей
+                </span>
+              )}
             </motion.div>
 
             {book.description && (
@@ -173,6 +196,11 @@ export function BookDetail({ book }: { book: BookFull }) {
             </motion.p>
           </div>
         </div>
+
+        {/* Related books */}
+        <motion.div {...fade(0.4)}>
+          <RelatedBooks books={relatedBooks} />
+        </motion.div>
       </div>
     </div>
   );

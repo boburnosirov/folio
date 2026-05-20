@@ -14,6 +14,26 @@ export async function getBooks(query: BooksQuery = {}): Promise<BookWithAuthor[]
   const supabase = await createClient();
   const { category, language, search, featured, limit = 24, offset = 0 } = query;
 
+  if (search) {
+    // Search by title AND author name via SQL function
+    const { data, error } = await supabase
+      .rpc("search_books", { query: search })
+      .select("*, authors(*)")
+      .range(offset, offset + limit - 1);
+    if (error) {
+      // Fallback to ilike if rpc fails
+      const { data: fallback } = await supabase
+        .from("books")
+        .select("*, authors(*)")
+        .eq("is_public", true)
+        .or(`title.ilike.%${search}%,title_ru.ilike.%${search}%`)
+        .order("is_featured", { ascending: false })
+        .range(offset, offset + limit - 1);
+      return (fallback ?? []) as BookWithAuthor[];
+    }
+    return (data ?? []) as BookWithAuthor[];
+  }
+
   let q = supabase
     .from("books")
     .select("*, authors(*)")
@@ -25,7 +45,6 @@ export async function getBooks(query: BooksQuery = {}): Promise<BookWithAuthor[]
   if (category) q = q.eq("category_slug", category);
   if (language) q = q.eq("language", language);
   if (featured) q = q.eq("is_featured", true);
-  if (search) q = q.ilike("title", `%${search}%`);
 
   const { data, error } = await q;
   if (error) { console.error("[getBooks]", error.message); return []; }
@@ -46,6 +65,41 @@ export async function getBook(slug: string): Promise<BookFull | null> {
   return data as BookFull;
 }
 
+export async function getRelatedBooks(
+  bookId: number,
+  categorySlug: string | null,
+  authorId: number | null,
+  limit = 4
+): Promise<BookWithAuthor[]> {
+  const supabase = await createClient();
+
+  if (categorySlug) {
+    const { data } = await supabase
+      .from("books")
+      .select("*, authors(*)")
+      .eq("is_public", true)
+      .eq("category_slug", categorySlug)
+      .neq("id", bookId)
+      .order("is_featured", { ascending: false })
+      .order("read_count", { ascending: false })
+      .limit(limit);
+    if (data && data.length > 0) return data as BookWithAuthor[];
+  }
+
+  if (authorId) {
+    const { data } = await supabase
+      .from("books")
+      .select("*, authors(*)")
+      .eq("is_public", true)
+      .eq("author_id", authorId)
+      .neq("id", bookId)
+      .limit(limit);
+    if (data && data.length > 0) return data as BookWithAuthor[];
+  }
+
+  return [];
+}
+
 export async function getFeaturedBooks(limit = 6): Promise<BookWithAuthor[]> {
   return getBooks({ featured: true, limit });
 }
@@ -57,10 +111,7 @@ export async function getBooksByCategory(
   return getBooks({ category: categorySlug, limit });
 }
 
-export async function searchBooks(query: string): Promise<BookWithAuthor[]> {
-  return getBooks({ search: query });
-}
-
-export async function incrementReadCount(_bookId: number): Promise<void> {
-  // Increment happens server-side via DB trigger once wired up
+export async function incrementReadCount(bookId: number): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc("increment_read_count", { book_id: bookId });
 }

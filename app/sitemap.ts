@@ -7,13 +7,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient();
   const { data: books } = await supabase
     .from("books")
-    .select("slug, updated_at")
+    .select("slug, created_at")
     .eq("is_public", true)
-    .order("updated_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   const bookUrls: MetadataRoute.Sitemap = (books ?? []).map((book) => ({
     url: `${BASE_URL}/books/${book.slug}`,
-    lastModified: book.updated_at ? new Date(book.updated_at) : new Date(),
+    lastModified: book.created_at ? new Date(book.created_at) : new Date(),
     changeFrequency: "monthly",
     priority: 0.8,
   }));

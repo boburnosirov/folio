@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getBook } from "@/lib/books";
+import { getBook, getRelatedBooks, incrementReadCount } from "@/lib/books";
+import { createClient } from "@/lib/supabase/server";
 import { BookDetail } from "./BookDetail";
 
 const BASE_URL = "https://folio-ten-ashy.vercel.app";
@@ -39,16 +40,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       ...(book.cover_url ? { images: [book.cover_url] } : {}),
     },
-    alternates: {
-      canonical: `${BASE_URL}/books/${slug}`,
-    },
+    alternates: { canonical: `${BASE_URL}/books/${slug}` },
   };
 }
 
 export default async function BookPage({ params }: Props) {
   const { slug } = await params;
-  const book = await getBook(slug);
+
+  const [book, supabase] = await Promise.all([getBook(slug), createClient()]);
   if (!book) notFound();
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const [relatedBooks, bookmarkRow] = await Promise.all([
+    getRelatedBooks(book.id, book.category_slug, book.author_id),
+    user
+      ? supabase
+          .from("user_bookmarks")
+          .select("book_id")
+          .eq("user_id", user.id)
+          .eq("book_id", book.id)
+          .limit(1)
+          .then(({ data }) => (data ?? []).length > 0)
+      : Promise.resolve(false),
+  ]);
+
+  // Increment read count (fire-and-forget)
+  incrementReadCount(book.id).catch(() => {});
 
   const title = book.title_ru ?? book.title;
   const authorName = book.authors ? (book.authors.name_ru ?? book.authors.name) : null;
@@ -74,7 +92,12 @@ export default async function BookPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <BookDetail book={book} />
+      <BookDetail
+        book={book}
+        relatedBooks={relatedBooks}
+        isBookmarked={bookmarkRow}
+        isLoggedIn={!!user}
+      />
     </>
   );
 }
