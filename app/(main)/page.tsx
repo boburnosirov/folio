@@ -5,8 +5,27 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { QuoteSection } from "@/components/home/QuoteSection";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Folio",
+  url: "https://folio-ten-ashy.vercel.app",
+  description: "Бесплатная онлайн-библиотека книг из общественного достояния",
+  inLanguage: "ru",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: "https://folio-ten-ashy.vercel.app/catalog?search={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function HomePage() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="relative bg-background text-foreground">
       <HeroSection />
 
@@ -38,5 +57,6 @@ export default function HomePage() {
         <HowItWorksSection />
       </div>
     </div>
+    </>
   );
 }

@@ -18,19 +18,34 @@ const cormorantGaramond = Cormorant_Garamond({
   display: "swap",
 });
 
+const BASE_URL = "https://folio-ten-ashy.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: {
     default: "Folio — Бесплатная онлайн-библиотека",
-    template: "%s | Folio",
+    template: "%s — Folio",
   },
   description:
     "Читайте и скачивайте книги из общественного достояния бесплатно. Русская классика, зарубежная литература, узбекская классика, философия и многое другое.",
-  keywords: ["книги", "библиотека", "читать онлайн", "бесплатно", "классика", "public domain"],
+  keywords: ["книги", "библиотека", "читать онлайн", "бесплатно", "классика", "public domain", "Folio"],
+  authors: [{ name: "Folio" }],
+  creator: "Folio",
   openGraph: {
     type: "website",
     locale: "ru_RU",
+    url: BASE_URL,
+    siteName: "Folio",
     title: "Folio — Бесплатная онлайн-библиотека",
-    description: "Бесплатная библиотека книг из общественного достояния",
+    description: "Читайте книги из общественного достояния бесплатно. Русская и узбекская классика, философия, наука.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Folio — Бесплатная онлайн-библиотека",
+    description: "Читайте книги из общественного достояния бесплатно.",
+  },
+  alternates: {
+    canonical: BASE_URL,
   },
 };
 
