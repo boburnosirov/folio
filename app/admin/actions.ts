@@ -28,28 +28,17 @@ function slugify(text: string): string {
 async function getOrCreateAuthor(name: string): Promise<number | null> {
   const trimmed = name.trim();
   if (!trimmed) return null;
-  const supabase = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = createAdminClient() as any;
 
-  const { data: byName } = await supabase
-    .from("authors")
-    .select("id")
-    .ilike("name", trimmed)
-    .limit(1);
-  if (byName && byName.length > 0) return (byName[0] as { id: number }).id;
+  const { data: byName } = await db.from("authors").select("id").ilike("name", trimmed).limit(1);
+  if (byName?.length > 0) return byName[0].id as number;
 
-  const { data: byRu } = await supabase
-    .from("authors")
-    .select("id")
-    .ilike("name_ru", trimmed)
-    .limit(1);
-  if (byRu && byRu.length > 0) return (byRu[0] as { id: number }).id;
+  const { data: byRu } = await db.from("authors").select("id").ilike("name_ru", trimmed).limit(1);
+  if (byRu?.length > 0) return byRu[0].id as number;
 
-  const { data: created } = await supabase
-    .from("authors")
-    .insert({ name: trimmed })
-    .select("id")
-    .single();
-  return (created as { id: number } | null)?.id ?? null;
+  const { data: created } = await db.from("authors").insert({ name: trimmed }).select("id").single();
+  return (created?.id as number) ?? null;
 }
 
 function parseBookForm(formData: FormData) {
@@ -77,7 +66,8 @@ export async function createBook(formData: FormData) {
   await requireAdmin();
   const fields = parseBookForm(formData);
   const author_id = await getOrCreateAuthor(fields.author_name);
-  const supabase = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
 
   const slug = slugify(fields.title_ru ?? fields.title);
   const { error } = await supabase.from("books").insert({
@@ -105,7 +95,8 @@ export async function updateBook(id: number, formData: FormData) {
   await requireAdmin();
   const fields = parseBookForm(formData);
   const author_id = await getOrCreateAuthor(fields.author_name);
-  const supabase = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
 
   const { error } = await supabase
     .from("books")
@@ -132,7 +123,8 @@ export async function updateBook(id: number, formData: FormData) {
 
 export async function deleteBook(id: number) {
   await requireAdmin();
-  const supabase = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
   const { error } = await supabase.from("books").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/books");
@@ -141,7 +133,8 @@ export async function deleteBook(id: number) {
 
 export async function toggleBookVisibility(id: number, isPublic: boolean) {
   await requireAdmin();
-  const supabase = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any;
   const { error } = await supabase
     .from("books")
     .update({ is_public: isPublic })
