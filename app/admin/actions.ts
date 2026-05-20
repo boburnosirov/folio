@@ -34,22 +34,22 @@ async function getOrCreateAuthor(name: string): Promise<number | null> {
     .from("authors")
     .select("id")
     .ilike("name", trimmed)
-    .maybeSingle();
-  if (byName) return byName.id;
+    .limit(1);
+  if (byName && byName.length > 0) return (byName[0] as { id: number }).id;
 
   const { data: byRu } = await supabase
     .from("authors")
     .select("id")
     .ilike("name_ru", trimmed)
-    .maybeSingle();
-  if (byRu) return byRu.id;
+    .limit(1);
+  if (byRu && byRu.length > 0) return (byRu[0] as { id: number }).id;
 
   const { data: created } = await supabase
     .from("authors")
     .insert({ name: trimmed })
     .select("id")
     .single();
-  return created?.id ?? null;
+  return (created as { id: number } | null)?.id ?? null;
 }
 
 function parseBookForm(formData: FormData) {
