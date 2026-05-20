@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { ArrowRight, Layers } from "lucide-react";
+import { ArrowRight, BookMarked } from "lucide-react";
 import { BookCover } from "./BookCover";
 import { MONTH_BOOKS } from "./homeData";
 
@@ -45,8 +45,8 @@ export function CarouselPlaceholder() {
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-foreground/48">
-            <Layers className="h-4 w-4" />
-            Демо-карусель оставлена для сравнения
+            <BookMarked className="h-4 w-4" />
+            Лучшие книги этого месяца
           </div>
         </motion.div>
 
@@ -70,8 +70,6 @@ export function CarouselPlaceholder() {
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <PillLink href="/demo/css">CSS 3D</PillLink>
-            <PillLink href="/demo/r3f">React Three Fiber</PillLink>
             <PillLink href="/catalog" primary>
               Весь каталог <ArrowRight className="ml-2 h-4 w-4" />
             </PillLink>

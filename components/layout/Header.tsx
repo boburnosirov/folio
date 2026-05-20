@@ -8,6 +8,7 @@ import { BookOpen, Menu, Search, X } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
+import { UserMenu, UserMenuMobile } from "./UserMenu";
 
 const navLinks = [
   { href: "/catalog", label: "Каталог" },
@@ -57,18 +58,7 @@ export function Header() {
             <Search className="h-4 w-4" />
           </Link>
           <ThemeToggle />
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-full text-foreground/62 hover:text-foreground")}
-          >
-            Войти
-          </Link>
-          <Link
-            href="/register"
-            className="inline-flex h-9 items-center rounded-full bg-[#0071e3] px-4 text-sm font-semibold text-white transition-transform hover:scale-[1.025] active:scale-[.97] dark:bg-white dark:text-black"
-          >
-            Начать читать
-          </Link>
+          <UserMenu />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -99,13 +89,8 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <div className="mt-2 flex gap-2 border-t border-black/6 pt-3 dark:border-white/10">
-                <Link href="/login" onClick={() => setMobileOpen(false)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex-1 rounded-full")}>
-                  Войти
-                </Link>
-                <Link href="/register" onClick={() => setMobileOpen(false)} className="inline-flex h-9 flex-1 items-center justify-center rounded-full bg-[#0071e3] text-sm font-semibold text-white">
-                  Регистрация
-                </Link>
+              <div className="mt-2 border-t border-black/6 pt-3 dark:border-white/10">
+                <UserMenuMobile onClose={() => setMobileOpen(false)} />
               </div>
             </nav>
           </motion.div>

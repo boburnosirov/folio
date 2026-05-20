@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SmoothScroll } from "@/components/effects/SmoothScroll";
 import { CursorFollower } from "@/components/effects/CursorFollower";
+import { PageTransition } from "@/components/effects/PageTransition";
 
 export default function MainLayout({
   children,
@@ -13,7 +14,9 @@ export default function MainLayout({
       <CursorFollower />
       <div className="flex min-h-screen flex-col">
         <Header />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <Footer />
       </div>
     </SmoothScroll>
