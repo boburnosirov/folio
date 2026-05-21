@@ -140,6 +140,17 @@ export async function getMostReadBooks(period: "week" | "month" | "all", limit =
   return (data ?? []) as BookWithAuthor[];
 }
 
+export async function getBooksCount(query: BooksQuery = {}): Promise<number> {
+  const supabase = await createClient();
+  const { category, language, search } = query;
+  let q = supabase.from("books").select("*", { count: "exact", head: true }).eq("is_public", true);
+  if (category) q = q.eq("category_slug", category);
+  if (language) q = q.eq("language", language);
+  if (search) q = q.or(`title.ilike.%${search}%,title_ru.ilike.%${search}%`);
+  const { count } = await q;
+  return count ?? 0;
+}
+
 export interface LibraryStats {
   bookCount: number;
   authorCount: number;

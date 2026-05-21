@@ -21,10 +21,10 @@ export async function getFavorites(): Promise<BookWithAuthor[]> {
 
 export async function toggleFavorite(
   bookId: number
-): Promise<{ isFavorite: boolean }> {
+): Promise<{ isFavorite: boolean; notLoggedIn?: boolean }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { isFavorite: false };
+  if (!user) return { isFavorite: false, notLoggedIn: true };
 
   const { data: existing } = await supabase
     .from("user_favorites")
@@ -73,10 +73,10 @@ export async function getReadLater(): Promise<BookWithAuthor[]> {
 
 export async function toggleReadLater(
   bookId: number
-): Promise<{ isReadLater: boolean }> {
+): Promise<{ isReadLater: boolean; notLoggedIn?: boolean }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { isReadLater: false };
+  if (!user) return { isReadLater: false, notLoggedIn: true };
 
   const { data: existing } = await supabase
     .from("user_read_later")

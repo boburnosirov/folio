@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Search } from "lucide-react";
-import { getBooks } from "@/lib/books";
+import { getBooks, getBooksCount } from "@/lib/books";
 import { createClient } from "@/lib/supabase/server";
 import { AnimatedGrid } from "@/components/catalog/AnimatedGrid";
 import { CatalogFilters } from "@/components/catalog/CatalogFilters";
-import type { Category } from "@/lib/types/database";
+import type { BookWithAuthor, Category } from "@/lib/types/database";
 
 export const metadata: Metadata = {
   title: "Каталог книг — Folio",
@@ -17,18 +17,31 @@ interface CatalogPageProps {
   searchParams: Promise<{ category?: string; language?: string; search?: string }>;
 }
 
+function deduplicateBooks(books: BookWithAuthor[], language?: string): BookWithAuthor[] {
+  if (language) return books;
+  // When showing all languages, prefer RU over EN for companion pairs
+  const ruSlugs = new Set(books.filter((b) => b.language === "ru").map((b) => b.slug));
+  return books.filter((b) => {
+    if (b.language === "en" && b.companion_slug && ruSlugs.has(b.companion_slug)) return false;
+    return true;
+  });
+}
+
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const params = await searchParams;
   const { category, language, search } = params;
 
-  const [books, categoriesResult] = await Promise.all([
-    getBooks({ category, language, search, limit: 48 }),
+  const [books, totalCount, categoriesResult] = await Promise.all([
+    getBooks({ category, language, search, limit: 200 }),
+    getBooksCount({ category, language, search }),
     createClient().then((sb) =>
       sb.from("categories").select("*").order("display_order")
     ),
   ]);
 
   const categories: Category[] = categoriesResult.data ?? [];
+  const displayBooks = deduplicateBooks(books, language);
+  const displayCount = language ? totalCount : Math.round(totalCount / 2) || displayBooks.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,8 +56,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
               : "Все книги"}
           </h1>
           <p className="mt-2 text-foreground/55">
-            {books.length > 0
-              ? `${books.length} ${plural(books.length, "книга", "книги", "книг")}`
+            {displayBooks.length > 0
+              ? `${displayCount} ${plural(displayCount, "книга", "книги", "книг")}`
               : "Ничего не найдено"}
           </p>
         </div>
@@ -59,7 +72,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
               placeholder="Название, автор…"
               className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground/38"
             />
-            {(category) && <input type="hidden" name="category" value={category} />}
+            {category && <input type="hidden" name="category" value={category} />}
           </div>
         </form>
 
@@ -69,8 +82,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         </Suspense>
 
         {/* Grid */}
-        {books.length > 0 ? (
-          <AnimatedGrid books={books} />
+        {displayBooks.length > 0 ? (
+          <AnimatedGrid books={displayBooks} />
         ) : (
           <div className="mt-20 flex flex-col items-center gap-4 text-center text-foreground/45">
             <p className="text-5xl">📚</p>
