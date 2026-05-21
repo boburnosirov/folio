@@ -94,16 +94,21 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
   );
 }
 
-const STATS = [
-  { value: 500, suffix: "+", label: "книг в библиотеке" },
-  { value: 8, suffix: "", label: "категорий" },
-  { value: 42, suffix: "", label: "автора" },
-  { value: 3, suffix: " века", label: "литературы" },
-];
+interface CounterSectionProps {
+  bookCount?: number;
+  authorCount?: number;
+}
 
-export function CounterSection() {
+export function CounterSection({ bookCount = 500, authorCount = 42 }: CounterSectionProps) {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const STATS = [
+    { value: bookCount, suffix: "", label: "книг в библиотеке" },
+    { value: 8, suffix: "", label: "категорий" },
+    { value: authorCount, suffix: "", label: "авторов" },
+    { value: 3, suffix: " века", label: "литературы" },
+  ];
 
   return (
     <section ref={ref} className="relative overflow-hidden px-6 py-20">
