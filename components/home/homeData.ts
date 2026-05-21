@@ -23,77 +23,118 @@ export type ExcerptItem = HomeBook & {
   batch: string;
 };
 
+// ISBN-based Open Library covers (modern books)
+const OL = (isbn: string) => `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+
 export const COVERS = {
-  anna: "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
-  crime: "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
-  warPeace: "https://commons.wikimedia.org/wiki/Special:FilePath/Tolstoy_-_War_and_Peace,_first_edition,_1869.jpg?width=700",
-  gogol: "https://commons.wikimedia.org/wiki/Special:FilePath/Dead_Souls_(novel)_Nikolai_Gogol_1842_title_page.jpg?width=700",
-  chekhov: "https://commons.wikimedia.org/wiki/Special:FilePath/Chekhov_Detvora_cover.jpg?width=700",
-  onegin: "https://commons.wikimedia.org/wiki/Special:FilePath/Eugene_Onegin_first_edition.jpg?width=700",
+  // Modern fiction
+  crawdads:    OL("9780735224292"), // Where the Crawdads Sing
+  midnightLib: OL("9780525559474"), // The Midnight Library
+  klara:       OL("9780593311295"), // Klara and the Sun
+  normalPeople:OL("9780571334650"), // Normal People
+  pachinko:    OL("9781455563920"), // Pachinko
+  aLittleLife: OL("9780385539258"), // A Little Life
+  hamnet:      OL("9780525659198"), // Hamnet
+  vegetarian:  OL("9781101906118"), // The Vegetarian
 
-  hugo: "https://commons.wikimedia.org/wiki/Special:FilePath/Les_miserables.jpg?width=700",
-  austen: "https://commons.wikimedia.org/wiki/Special:FilePath/PrideAndPrejudiceTitlePage.jpg?width=700",
-  sherlock: "https://commons.wikimedia.org/wiki/Special:FilePath/Adventures_of_sherlock_holmes.jpg?width=700",
-  dickens: "https://commons.wikimedia.org/wiki/Special:FilePath/A_Tale_of_Two_Cities_-_First_edition_cover_1859.jpg?width=700",
-  dumas: "https://commons.wikimedia.org/wiki/Special:FilePath/Three_Musketeers_1846.jpg?width=700",
-  london: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Call_of_the_Wild_(1903)_front_cover.jpg?width=700",
+  // Modern romance
+  itEnds:      OL("9781501110368"), // It Ends with Us
+  hatingGame:  OL("9780062439598"), // The Hating Game
+  beachRead:   OL("9781250219800"), // Beach Read
+  sevenHusbands:OL("9781501161933"),// Seven Husbands of Evelyn Hugo
+  vacation:    OL("9781250179760"), // People We Meet on Vacation
 
-  janeEyre: "https://commons.wikimedia.org/wiki/Special:FilePath/Jane_Eyre_title_page.jpg?width=700",
-  werther: "https://commons.wikimedia.org/wiki/Special:FilePath/-1-_Die_Leiden_des_jungen_Werthers._Erstdruck.jpg?width=700",
-  wildfell: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Tenant_of_Wildfell_Hall.jpg?width=700",
-  wuthering: "https://commons.wikimedia.org/wiki/Special:FilePath/Wuthering_Heights_and_Agnes_Grey_title_page.jpg?width=700",
-  scarlet: "https://commons.wikimedia.org/wiki/Special:FilePath/Scarlet-letter-cover.jpg?width=700",
-  firstLove: "https://commons.wikimedia.org/wiki/Special:FilePath/Turgenev_First_Love_1884.jpg?width=700",
+  // Modern self-development
+  atomicHabits:OL("9780735211292"), // Atomic Habits
+  subtleArt:   OL("9780062457714"), // The Subtle Art of Not Giving a F*ck
+  rules12:     OL("9780345816023"), // 12 Rules for Life
+  thinkAgain:  OL("9781984878106"), // Think Again
+  fourThousand:OL("9780374159122"), // Four Thousand Weeks
+  deepWork:    OL("9781455586691"), // Deep Work
+  cantHurtMe:  OL("9781544512273"), // Can't Hurt Me
+  fiveAmClub:  OL("9781443456623"), // The 5 AM Club
+  disliked:    OL("9781501197277"), // The Courage to Be Disliked
 
+  // Modern business
+  zeroToOne:   OL("9780804139021"), // Zero to One
+  shoeDog:     OL("9781476787954"), // Shoe Dog
+  neverSplit:  OL("9780062407801"), // Never Split the Difference
+  elonMusk:    OL("9781982181284"), // Elon Musk (Isaacson)
+
+  // Modern science
+  sapiens:     OL("9780062316097"), // Sapiens
+  homoDeus:    OL("9780062464316"), // Homo Deus
+  lessons21:   OL("9780525512172"), // 21 Lessons
+  martian:     OL("9780553418026"), // The Martian
+  astrophysics:OL("9780393609394"), // Astrophysics for People in a Hurry
+  theGene:     OL("9781476733500"), // The Gene
+
+  // Classics (kept for EXCERPTS)
+  anna:        "https://commons.wikimedia.org/wiki/Special:FilePath/AnnaKareninaTitle.jpg?width=700",
+  crime:       "https://commons.wikimedia.org/wiki/Special:FilePath/Cover_of_the_first_edition_of_Crime_and_Punishment.jpg?width=700",
+  warPeace:    "https://commons.wikimedia.org/wiki/Special:FilePath/Tolstoy_-_War_and_Peace,_first_edition,_1869.jpg?width=700",
+  gogol:       "https://commons.wikimedia.org/wiki/Special:FilePath/Dead_Souls_(novel)_Nikolai_Gogol_1842_title_page.jpg?width=700",
+  chekhov:     "https://commons.wikimedia.org/wiki/Special:FilePath/Chekhov_Detvora_cover.jpg?width=700",
+  onegin:      "https://commons.wikimedia.org/wiki/Special:FilePath/Eugene_Onegin_first_edition.jpg?width=700",
+  hugo:        "https://commons.wikimedia.org/wiki/Special:FilePath/Les_miserables.jpg?width=700",
+  austen:      "https://commons.wikimedia.org/wiki/Special:FilePath/PrideAndPrejudiceTitlePage.jpg?width=700",
+  sherlock:    "https://commons.wikimedia.org/wiki/Special:FilePath/Adventures_of_sherlock_holmes.jpg?width=700",
+  dickens:     "https://commons.wikimedia.org/wiki/Special:FilePath/A_Tale_of_Two_Cities_-_First_edition_cover_1859.jpg?width=700",
+  dumas:       "https://commons.wikimedia.org/wiki/Special:FilePath/Three_Musketeers_1846.jpg?width=700",
+  london:      "https://commons.wikimedia.org/wiki/Special:FilePath/The_Call_of_the_Wild_(1903)_front_cover.jpg?width=700",
+  janeEyre:    "https://commons.wikimedia.org/wiki/Special:FilePath/Jane_Eyre_title_page.jpg?width=700",
+  werther:     "https://commons.wikimedia.org/wiki/Special:FilePath/-1-_Die_Leiden_des_jungen_Werthers._Erstdruck.jpg?width=700",
+  wildfell:    "https://commons.wikimedia.org/wiki/Special:FilePath/The_Tenant_of_Wildfell_Hall.jpg?width=700",
+  wuthering:   "https://commons.wikimedia.org/wiki/Special:FilePath/Wuthering_Heights_and_Agnes_Grey_title_page.jpg?width=700",
+  scarlet:     "https://commons.wikimedia.org/wiki/Special:FilePath/Scarlet-letter-cover.jpg?width=700",
+  firstLove:   "https://commons.wikimedia.org/wiki/Special:FilePath/Turgenev_First_Love_1884.jpg?width=700",
   meditations: "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
-  seneca: "https://commons.wikimedia.org/wiki/Special:FilePath/Seneca_-_Lettere,_1802_(page_3_crop).jpg?width=700",
-  montaigne: "https://commons.wikimedia.org/wiki/Special:FilePath/Montaigne_-_Essais,_Musart,_1847.djvu?width=700",
-  nietzsche: "https://commons.wikimedia.org/wiki/Special:FilePath/Nietzsche_-_Also_sprach_Zarathustra_-_1883.jpg?width=700",
-  schopenhauer: "https://commons.wikimedia.org/wiki/Special:FilePath/Schopenhauer_-_Die_Welt_als_Wille_und_Vorstellung.jpg?width=700",
-  emerson: "https://commons.wikimedia.org/wiki/Special:FilePath/Essays,_First_Series,_Emerson,_1841.jpg?width=700",
-
-  selfHelp: "https://commons.wikimedia.org/wiki/Special:FilePath/Self-Help_-_Facing_page_108.png?width=700",
-  rich: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
-  hill: "https://commons.wikimedia.org/wiki/Special:FilePath/Think_and_Grow_Rich,_original_1937_title_page.jpg?width=700",
-  marden: "https://commons.wikimedia.org/wiki/Special:FilePath/Pushing_to_the_front_(1894).jpg?width=700",
-  character: "https://commons.wikimedia.org/wiki/Special:FilePath/Character_-_Samuel_Smiles.jpg?width=700",
-  thrift: "https://commons.wikimedia.org/wiki/Special:FilePath/Thrift_-_Samuel_Smiles.jpg?width=700",
-
+  seneca:      "https://commons.wikimedia.org/wiki/Special:FilePath/Seneca_-_Lettere,_1802_(page_3_crop).jpg?width=700",
+  montaigne:   "https://commons.wikimedia.org/wiki/Special:FilePath/Montaigne_-_Essais,_Musart,_1847.djvu?width=700",
+  nietzsche:   "https://commons.wikimedia.org/wiki/Special:FilePath/Nietzsche_-_Also_sprach_Zarathustra_-_1883.jpg?width=700",
+  schopenhauer:"https://commons.wikimedia.org/wiki/Special:FilePath/Schopenhauer_-_Die_Welt_als_Wille_und_Vorstellung.jpg?width=700",
+  emerson:     "https://commons.wikimedia.org/wiki/Special:FilePath/Essays,_First_Series,_Emerson,_1841.jpg?width=700",
+  selfHelp:    "https://commons.wikimedia.org/wiki/Special:FilePath/Self-Help_-_Facing_page_108.png?width=700",
+  rich:        "https://commons.wikimedia.org/wiki/Special:FilePath/The_Science_of_Getting_Rich_-_title_frame.png?width=700",
+  hill:        "https://commons.wikimedia.org/wiki/Special:FilePath/Think_and_Grow_Rich,_original_1937_title_page.jpg?width=700",
+  marden:      "https://commons.wikimedia.org/wiki/Special:FilePath/Pushing_to_the_front_(1894).jpg?width=700",
+  character:   "https://commons.wikimedia.org/wiki/Special:FilePath/Character_-_Samuel_Smiles.jpg?width=700",
+  thrift:      "https://commons.wikimedia.org/wiki/Special:FilePath/Thrift_-_Samuel_Smiles.jpg?width=700",
   poorRichard: "https://commons.wikimedia.org/wiki/Special:FilePath/Poor_Richard.jpg?width=700",
-  franklin: "https://commons.wikimedia.org/wiki/Special:FilePath/The_autobiography_of_Benjamin_Franklin_(1895)_(14804149143).jpg?width=700",
-  carnegie: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Gospel_of_Wealth.jpg?width=700",
-  successful: "https://commons.wikimedia.org/wiki/Special:FilePath/Successful_men_of_today_and_what_they_say_of_success.jpg?width=700",
-  business: "https://commons.wikimedia.org/wiki/Special:FilePath/Business_hints_for_men_and_women_(IA_businesshintsfor00calh).pdf?page=1&width=700",
-  wealth: "https://commons.wikimedia.org/wiki/Special:FilePath/Wealth_against_commonwealth.jpg?width=700",
-
-  astronomy: "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
-  verneWorld: "https://commons.wikimedia.org/wiki/Special:FilePath/Verne_Tour_du_Monde.jpg?width=700",
-  verneSea: "https://commons.wikimedia.org/wiki/Special:FilePath/Houghton_FC8_V5946_869ve_-_Verne,_frontispiece.jpg?width=700",
-  method: "https://commons.wikimedia.org/wiki/Special:FilePath/Science_and_method_(IA_sciencemethod00poin).pdf?page=1&width=700",
-  einstein: "https://commons.wikimedia.org/wiki/Special:FilePath/Einstein_Relativity_1920_title_page.jpg?width=700",
-  moon: "https://commons.wikimedia.org/wiki/Special:FilePath/From_the_Earth_to_the_Moon_-_front_cover.jpg?width=700",
-
-  babur: "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
-  navai: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
-  divan: "https://commons.wikimedia.org/wiki/Special:FilePath/Divan_of_Ali-Shir_Nava'i_MET_DP271245.jpg?width=700",
-  timur: "https://commons.wikimedia.org/wiki/Special:FilePath/Temur-nama.jpg?width=700",
-  khamsa: "https://commons.wikimedia.org/wiki/Special:FilePath/Khamsa_of_Nizami_MET_DP232290.jpg?width=700",
+  franklin:    "https://commons.wikimedia.org/wiki/Special:FilePath/The_autobiography_of_Benjamin_Franklin_(1895)_(14804149143).jpg?width=700",
+  carnegie:    "https://commons.wikimedia.org/wiki/Special:FilePath/The_Gospel_of_Wealth.jpg?width=700",
+  successful:  "https://commons.wikimedia.org/wiki/Special:FilePath/Successful_men_of_today_and_what_they_say_of_success.jpg?width=700",
+  business:    "https://commons.wikimedia.org/wiki/Special:FilePath/Business_hints_for_men_and_women_(IA_businesshintsfor00calh).pdf?page=1&width=700",
+  wealth:      "https://commons.wikimedia.org/wiki/Special:FilePath/Wealth_against_commonwealth.jpg?width=700",
+  astronomy:   "https://commons.wikimedia.org/wiki/Special:FilePath/AstronomiePopulaire1880.jpg?width=700",
+  verneWorld:  "https://commons.wikimedia.org/wiki/Special:FilePath/Verne_Tour_du_Monde.jpg?width=700",
+  verneSea:    "https://commons.wikimedia.org/wiki/Special:FilePath/Houghton_FC8_V5946_869ve_-_Verne,_frontispiece.jpg?width=700",
+  method:      "https://commons.wikimedia.org/wiki/Special:FilePath/Science_and_method_(IA_sciencemethod00poin).pdf?page=1&width=700",
+  einstein:    "https://commons.wikimedia.org/wiki/Special:FilePath/Einstein_Relativity_1920_title_page.jpg?width=700",
+  moon:        "https://commons.wikimedia.org/wiki/Special:FilePath/From_the_Earth_to_the_Moon_-_front_cover.jpg?width=700",
+  babur:       "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated_Manuscript_Baburnamah.jpg?width=700",
+  navai:       "https://commons.wikimedia.org/wiki/Special:FilePath/Alisher_Navoi_-_Five_Poems_(Quintet)_-_Walters_W663_-_Top_Exterior.jpg?width=700",
+  divan:       "https://commons.wikimedia.org/wiki/Special:FilePath/Divan_of_Ali-Shir_Nava'i_MET_DP271245.jpg?width=700",
+  timur:       "https://commons.wikimedia.org/wiki/Special:FilePath/Temur-nama.jpg?width=700",
+  khamsa:      "https://commons.wikimedia.org/wiki/Special:FilePath/Khamsa_of_Nizami_MET_DP232290.jpg?width=700",
   uzbekPoetry: "https://commons.wikimedia.org/wiki/Special:FilePath/Uzbek_book_cover.jpg?width=700",
+  verne:       "https://commons.wikimedia.org/wiki/Special:FilePath/Verne_Tour_du_Monde.jpg?width=700",
+  marcus:      "https://commons.wikimedia.org/wiki/Special:FilePath/MeditationsMarcusAurelius1811.jpg?width=700",
 } as const;
 
 export const HOME_CATEGORIES: HomeCategory[] = [
   {
     slug: "russian-classics",
     name: "Художественная литература",
-    desc: "Толстой, Достоевский, Чехов, Гоголь",
+    desc: "Уайлд, Ишигуро, Пол, Руни и другие",
     icon: BookOpen,
     covers: [
-      { title: "Анна Каренина", author: "Толстой", variant: "anna", imageUrl: COVERS.anna },
-      { title: "Преступление", author: "Достоевский", variant: "crime", imageUrl: COVERS.crime },
-      { title: "Война и мир", author: "Толстой", variant: "anna", imageUrl: COVERS.warPeace },
-      { title: "Мёртвые души", author: "Гоголь", variant: "gogol", imageUrl: COVERS.gogol },
-      { title: "Детвора", author: "Чехов", variant: "chekhov", imageUrl: COVERS.chekhov },
-      { title: "Онегин", author: "Пушкин", variant: "gogol", imageUrl: COVERS.onegin },
+      { title: "Where the Crawdads Sing", author: "Оуэнс",   variant: "anna",    imageUrl: COVERS.crawdads },
+      { title: "Midnight Library",        author: "Хейг",    variant: "crime",   imageUrl: COVERS.midnightLib },
+      { title: "Klara and the Sun",       author: "Ишигуро", variant: "anna",    imageUrl: COVERS.klara },
+      { title: "Normal People",           author: "Руни",    variant: "gogol",   imageUrl: COVERS.normalPeople },
+      { title: "Pachinko",                author: "Ли",      variant: "chekhov", imageUrl: COVERS.pachinko },
+      { title: "A Little Life",           author: "Янагихара",variant: "gogol",  imageUrl: COVERS.aLittleLife },
     ],
   },
   {
@@ -102,26 +143,26 @@ export const HOME_CATEGORIES: HomeCategory[] = [
     desc: "Гюго, Остин, Диккенс, Дюма, Лондон",
     icon: Globe,
     covers: [
-      { title: "Отверженные", author: "Гюго", variant: "hugo", imageUrl: COVERS.hugo },
-      { title: "Гордость", author: "Остин", variant: "austen", imageUrl: COVERS.austen },
-      { title: "Шерлок", author: "Дойл", variant: "sherlock", imageUrl: COVERS.sherlock },
-      { title: "Два города", author: "Диккенс", variant: "hugo", imageUrl: COVERS.dickens },
-      { title: "Мушкетёры", author: "Дюма", variant: "franklin", imageUrl: COVERS.dumas },
-      { title: "Зов предков", author: "Лондон", variant: "sherlock", imageUrl: COVERS.london },
+      { title: "Hamnet",           author: "О'Фаррелл", variant: "hugo",    imageUrl: COVERS.hamnet },
+      { title: "The Vegetarian",   author: "Хан",       variant: "austen",  imageUrl: COVERS.vegetarian },
+      { title: "Отверженные",      author: "Гюго",      variant: "hugo",    imageUrl: COVERS.hugo },
+      { title: "Гордость",         author: "Остин",     variant: "austen",  imageUrl: COVERS.austen },
+      { title: "Два города",       author: "Диккенс",   variant: "hugo",    imageUrl: COVERS.dickens },
+      { title: "Зов предков",      author: "Лондон",    variant: "sherlock",imageUrl: COVERS.london },
     ],
   },
   {
     slug: "romance",
     name: "Романтика",
-    desc: "Остин, Бронте, Гёте, Тургенев",
+    desc: "Хувер, Генри, Нокс, Рид и другие",
     icon: Heart,
     covers: [
-      { title: "Jane Eyre", author: "Бронте", variant: "austen", imageUrl: COVERS.janeEyre },
-      { title: "Werther", author: "Гёте", variant: "hugo", imageUrl: COVERS.werther },
-      { title: "Wildfell Hall", author: "Бронте", variant: "austen", imageUrl: COVERS.wildfell },
-      { title: "Wuthering", author: "Бронте", variant: "crime", imageUrl: COVERS.wuthering },
-      { title: "The Scarlet", author: "Готорн", variant: "anna", imageUrl: COVERS.scarlet },
-      { title: "Первая любовь", author: "Тургенев", variant: "chekhov", imageUrl: COVERS.firstLove },
+      { title: "It Ends with Us",          author: "Хувер",  variant: "austen", imageUrl: COVERS.itEnds },
+      { title: "The Hating Game",          author: "Торн",   variant: "crime",  imageUrl: COVERS.hatingGame },
+      { title: "Beach Read",               author: "Генри",  variant: "austen", imageUrl: COVERS.beachRead },
+      { title: "Seven Husbands",           author: "Рид",    variant: "anna",   imageUrl: COVERS.sevenHusbands },
+      { title: "People We Meet",           author: "Генри",  variant: "chekhov",imageUrl: COVERS.vacation },
+      { title: "Jane Eyre",                author: "Бронте", variant: "austen", imageUrl: COVERS.janeEyre },
     ],
   },
   {
@@ -130,54 +171,54 @@ export const HOME_CATEGORIES: HomeCategory[] = [
     desc: "Аврелий, Сенека, Монтень, Ницше",
     icon: Brain,
     covers: [
-      { title: "Размышления", author: "Аврелий", variant: "marcus", imageUrl: COVERS.meditations },
-      { title: "Письма", author: "Сенека", variant: "franklin", imageUrl: COVERS.seneca },
-      { title: "Опыты", author: "Монтень", variant: "gogol", imageUrl: COVERS.montaigne },
-      { title: "Заратустра", author: "Ницше", variant: "hugo", imageUrl: COVERS.nietzsche },
-      { title: "Мир как воля", author: "Шопенгауэр", variant: "marcus", imageUrl: COVERS.schopenhauer },
-      { title: "Essays", author: "Эмерсон", variant: "austen", imageUrl: COVERS.emerson },
+      { title: "Размышления", author: "Аврелий",   variant: "marcus", imageUrl: COVERS.meditations },
+      { title: "Письма",      author: "Сенека",    variant: "franklin",imageUrl: COVERS.seneca },
+      { title: "Опыты",       author: "Монтень",   variant: "gogol",  imageUrl: COVERS.montaigne },
+      { title: "Заратустра",  author: "Ницше",     variant: "hugo",   imageUrl: COVERS.nietzsche },
+      { title: "Мир как воля",author: "Шопенгауэр",variant: "marcus", imageUrl: COVERS.schopenhauer },
+      { title: "Essays",      author: "Эмерсон",   variant: "austen", imageUrl: COVERS.emerson },
     ],
   },
   {
     slug: "self-development",
     name: "Саморазвитие",
-    desc: "Смайлс, Уоттлз, Хилл, Марден",
+    desc: "Клир, Паттерсон, Грант, Харари",
     icon: TrendingUp,
     covers: [
-      { title: "Self-Help", author: "Смайлс", variant: "franklin", imageUrl: COVERS.selfHelp },
-      { title: "The Science", author: "Уоттлз", variant: "verne", imageUrl: COVERS.rich },
-      { title: "Think", author: "Хилл", variant: "marcus", imageUrl: COVERS.hill },
-      { title: "Pushing", author: "Марден", variant: "sherlock", imageUrl: COVERS.marden },
-      { title: "Character", author: "Смайлс", variant: "franklin", imageUrl: COVERS.character },
-      { title: "Thrift", author: "Смайлс", variant: "franklin", imageUrl: COVERS.thrift },
+      { title: "Atomic Habits",      author: "Клир",   variant: "franklin",imageUrl: COVERS.atomicHabits },
+      { title: "The Subtle Art",     author: "Мэнсон", variant: "verne",   imageUrl: COVERS.subtleArt },
+      { title: "Deep Work",          author: "Ньюпорт",variant: "marcus",  imageUrl: COVERS.deepWork },
+      { title: "12 Rules for Life",  author: "Питерсон",variant: "sherlock",imageUrl: COVERS.rules12 },
+      { title: "Think Again",        author: "Грант",  variant: "franklin",imageUrl: COVERS.thinkAgain },
+      { title: "Can't Hurt Me",      author: "Гоггинс",variant: "franklin",imageUrl: COVERS.cantHurtMe },
     ],
   },
   {
     slug: "business-success",
     name: "Бизнес и успех",
-    desc: "Франклин, Карнеги и классика дела",
+    desc: "Тиль, Найт, Восс, Айзексон",
     icon: Briefcase,
     covers: [
-      { title: "Poor Richard", author: "Франклин", variant: "franklin", imageUrl: COVERS.poorRichard },
-      { title: "Автобиография", author: "Франклин", variant: "franklin", imageUrl: COVERS.franklin },
-      { title: "Gospel", author: "Карнеги", variant: "marcus", imageUrl: COVERS.carnegie },
-      { title: "Successful Men", author: "Эссе", variant: "hugo", imageUrl: COVERS.successful },
-      { title: "Business Hints", author: "Calhoun", variant: "sherlock", imageUrl: COVERS.business },
-      { title: "Wealth", author: "Lloyd", variant: "crime", imageUrl: COVERS.wealth },
+      { title: "Zero to One",         author: "Тиль",    variant: "franklin",imageUrl: COVERS.zeroToOne },
+      { title: "Shoe Dog",            author: "Найт",    variant: "franklin",imageUrl: COVERS.shoeDog },
+      { title: "Never Split",         author: "Восс",    variant: "marcus",  imageUrl: COVERS.neverSplit },
+      { title: "Elon Musk",           author: "Айзексон",variant: "hugo",    imageUrl: COVERS.elonMusk },
+      { title: "Автобиография",       author: "Франклин",variant: "franklin",imageUrl: COVERS.franklin },
+      { title: "Gospel of Wealth",    author: "Карнеги", variant: "marcus",  imageUrl: COVERS.carnegie },
     ],
   },
   {
     slug: "science",
     name: "Космос и наука",
-    desc: "Фламмарион, Верн, Пуанкаре, Эйнштейн",
+    desc: "Харари, Уир, Тайсон, Мухерджи",
     icon: Telescope,
     covers: [
-      { title: "Астрономия", author: "Фламмарион", variant: "verne", imageUrl: COVERS.astronomy },
-      { title: "Вокруг света", author: "Верн", variant: "verne", imageUrl: COVERS.verneWorld },
-      { title: "20 000 лье", author: "Верн", variant: "sherlock", imageUrl: COVERS.verneSea },
-      { title: "Science", author: "Пуанкаре", variant: "marcus", imageUrl: COVERS.method },
-      { title: "Relativity", author: "Эйнштейн", variant: "hugo", imageUrl: COVERS.einstein },
-      { title: "На Луну", author: "Верн", variant: "verne", imageUrl: COVERS.moon },
+      { title: "Sapiens",          author: "Харари",  variant: "verne",   imageUrl: COVERS.sapiens },
+      { title: "Homo Deus",        author: "Харари",  variant: "verne",   imageUrl: COVERS.homoDeus },
+      { title: "The Martian",      author: "Уир",     variant: "sherlock",imageUrl: COVERS.martian },
+      { title: "Astrophysics",     author: "Тайсон",  variant: "marcus",  imageUrl: COVERS.astrophysics },
+      { title: "The Gene",         author: "Мухерджи",variant: "hugo",    imageUrl: COVERS.theGene },
+      { title: "21 Lessons",       author: "Харари",  variant: "verne",   imageUrl: COVERS.lessons21 },
     ],
   },
   {
@@ -186,22 +227,22 @@ export const HOME_CATEGORIES: HomeCategory[] = [
     desc: "Навои, Бабур, поэзия и рукописи",
     icon: Star,
     covers: [
-      { title: "Бабур-наме", author: "Бабур", variant: "babur", imageUrl: COVERS.babur },
-      { title: "Хамса", author: "Навои", variant: "navai", imageUrl: COVERS.navai },
-      { title: "Диван", author: "Навои", variant: "navai", imageUrl: COVERS.divan },
-      { title: "Темур-наме", author: "Летопись", variant: "babur", imageUrl: COVERS.timur },
-      { title: "Хамса", author: "Низами", variant: "navai", imageUrl: COVERS.khamsa },
-      { title: "Поэзия", author: "Узбекская", variant: "franklin", imageUrl: COVERS.uzbekPoetry },
+      { title: "Бабур-наме",  author: "Бабур",    variant: "babur",   imageUrl: COVERS.babur },
+      { title: "Хамса",       author: "Навои",    variant: "navai",   imageUrl: COVERS.navai },
+      { title: "Диван",       author: "Навои",    variant: "navai",   imageUrl: COVERS.divan },
+      { title: "Темур-наме",  author: "Летопись", variant: "babur",   imageUrl: COVERS.timur },
+      { title: "Хамса",       author: "Низами",   variant: "navai",   imageUrl: COVERS.khamsa },
+      { title: "Поэзия",      author: "Узбекская",variant: "franklin",imageUrl: COVERS.uzbekPoetry },
     ],
   },
 ];
 
 export const MONTH_BOOKS: HomeBook[] = [
-  HOME_CATEGORIES[0].covers[0],
-  HOME_CATEGORIES[6].covers[0],
-  HOME_CATEGORIES[7].covers[0],
-  HOME_CATEGORIES[5].covers[0],
-  HOME_CATEGORIES[3].covers[0],
+  HOME_CATEGORIES[0].covers[0], // Where the Crawdads Sing
+  HOME_CATEGORIES[4].covers[0], // Atomic Habits
+  HOME_CATEGORIES[6].covers[0], // Sapiens
+  HOME_CATEGORIES[2].covers[0], // It Ends with Us
+  HOME_CATEGORIES[5].covers[0], // Zero to One
 ];
 
 export const EXCERPTS: ExcerptItem[] = [
