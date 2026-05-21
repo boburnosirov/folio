@@ -73,14 +73,19 @@ function FileSlot({
   async function handleFile(file: File) {
     setStatus("uploading");
     setError(null);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await uploadBookFile(bookId, bookSlug, type, fd);
-    if (res.success) {
-      setUrl(res.url ?? null);
-      setStatus("done");
-    } else {
-      setError(res.error ?? "Ошибка загрузки");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await uploadBookFile(bookId, bookSlug, type, fd);
+      if (res.success) {
+        setUrl(res.url ?? null);
+        setStatus("done");
+      } else {
+        setError(res.error ?? "Ошибка загрузки");
+        setStatus("error");
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Неизвестная ошибка");
       setStatus("error");
     }
   }
@@ -144,7 +149,10 @@ function FileSlot({
           }`}
         >
           {status === "uploading" ? (
-            <Loader2 className="h-6 w-6 animate-spin text-foreground/40" />
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-[#0071e3]" />
+              <p className="text-xs text-foreground/50">Загрузка… это может занять несколько секунд</p>
+            </div>
           ) : status === "error" ? (
             <>
               <AlertCircle className="h-6 w-6 text-rose-500" />
