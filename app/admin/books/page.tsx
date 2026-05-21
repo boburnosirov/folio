@@ -17,7 +17,7 @@ export default async function AdminBooksPage({ searchParams }: Props) {
 
   let query = supabase
     .from("books")
-    .select("id, title, title_ru, category_slug, language, is_public, is_featured, authors(name, name_ru)", {
+    .select("id, title, title_ru, category_slug, language, is_public, is_featured, txt_url, authors(name, name_ru)", {
       count: "exact",
     })
     .order("created_at", { ascending: false })
@@ -113,7 +113,7 @@ export default async function AdminBooksPage({ searchParams }: Props) {
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <BooksTableActions bookId={book.id} isPublic={book.is_public} />
+                  <BooksTableActions bookId={book.id} isPublic={book.is_public} hasTxt={!!book.txt_url} />
                 </td>
               </tr>
             ))}

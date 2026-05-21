@@ -234,23 +234,41 @@ export default function ReaderClient({ book }: { book: BookFull }) {
 
   // ── Fetch text ──
   useEffect(() => {
-    if (!book.gutenberg_id) {
-      setStatus("error");
+    // Priority: txt_url → gutenberg_id → error
+    if (book.txt_url) {
+      setStatus("loading");
+      fetch(book.txt_url)
+        .then((r) => {
+          if (!r.ok) throw new Error(r.statusText);
+          return r.text();
+        })
+        .then((text) => {
+          const chunks = splitIntoPages(text, WORDS_PER_PAGE);
+          setPages(chunks);
+          setStatus("ok");
+        })
+        .catch(() => setStatus("error"));
       return;
     }
-    setStatus("loading");
-    fetch(`/api/gutenberg/${book.gutenberg_id}`)
-      .then((r) => {
-        if (!r.ok) throw new Error(r.statusText);
-        return r.json() as Promise<{ text: string }>;
-      })
-      .then(({ text }) => {
-        const chunks = splitIntoPages(text, WORDS_PER_PAGE);
-        setPages(chunks);
-        setStatus("ok");
-      })
-      .catch(() => setStatus("error"));
-  }, [book.gutenberg_id]);
+
+    if (book.gutenberg_id) {
+      setStatus("loading");
+      fetch(`/api/gutenberg/${book.gutenberg_id}`)
+        .then((r) => {
+          if (!r.ok) throw new Error(r.statusText);
+          return r.json() as Promise<{ text: string }>;
+        })
+        .then(({ text }) => {
+          const chunks = splitIntoPages(text, WORDS_PER_PAGE);
+          setPages(chunks);
+          setStatus("ok");
+        })
+        .catch(() => setStatus("error"));
+      return;
+    }
+
+    setStatus("error");
+  }, [book.txt_url, book.gutenberg_id]);
 
   const go = useCallback(
     (dir: 1 | -1) => {
@@ -353,22 +371,42 @@ export default function ReaderClient({ book }: { book: BookFull }) {
               <div>
                 <p className="font-semibold text-foreground/60">Текст пока недоступен</p>
                 <p className="mt-1 text-sm text-foreground/40">
-                  {book.gutenberg_id
-                    ? "Не удалось загрузить текст с Project Gutenberg"
-                    : "Текст этой книги ещё не добавлен в базу"}
+                  Текст этой книги ещё не добавлен в библиотеку
                 </p>
               </div>
-              {book.gutenberg_id && (
-                <a
-                  href={`https://www.gutenberg.org/ebooks/${book.gutenberg_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full border border-foreground/12 px-4 py-2 text-sm text-foreground/60 transition-colors hover:text-foreground"
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  Читать на Project Gutenberg
-                </a>
-              )}
+              <div className="flex flex-wrap justify-center gap-2">
+                {book.epub_url && (
+                  <a
+                    href={book.epub_url}
+                    download
+                    className="flex items-center gap-2 rounded-full border border-foreground/12 px-4 py-2 text-sm text-foreground/60 transition-colors hover:text-foreground"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Скачать EPUB
+                  </a>
+                )}
+                {book.pdf_url && (
+                  <a
+                    href={book.pdf_url}
+                    download
+                    className="flex items-center gap-2 rounded-full border border-foreground/12 px-4 py-2 text-sm text-foreground/60 transition-colors hover:text-foreground"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Скачать PDF
+                  </a>
+                )}
+                {book.gutenberg_id && (
+                  <a
+                    href={`https://www.gutenberg.org/ebooks/${book.gutenberg_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-full border border-foreground/12 px-4 py-2 text-sm text-foreground/60 transition-colors hover:text-foreground"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Читать на Project Gutenberg
+                  </a>
+                )}
+              </div>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Upload } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/server";
 import { updateBook } from "../../../actions";
 import BookForm from "../../BookForm";
@@ -37,12 +37,19 @@ export default async function EditBookPage({ params }: Props) {
         <ChevronLeft className="h-4 w-4" />
         Назад к книгам
       </Link>
-      <h1 className="mb-2 text-2xl font-semibold text-foreground">
-        Редактировать книгу
-      </h1>
-      <p className="mb-8 text-sm text-foreground/45">
-        {book.title_ru ?? book.title}
-      </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="mb-1 text-2xl font-semibold text-foreground">Редактировать книгу</h1>
+          <p className="text-sm text-foreground/45">{book.title_ru ?? book.title}</p>
+        </div>
+        <Link
+          href={`/admin/books/${bookId}/upload`}
+          className="flex items-center gap-2 rounded-full border border-foreground/12 px-4 py-2 text-sm text-foreground/60 hover:border-foreground/25 hover:text-foreground"
+        >
+          <Upload className="h-4 w-4" />
+          Файлы книги
+        </Link>
+      </div>
       <div className="max-w-2xl">
         <BookForm
           action={action}

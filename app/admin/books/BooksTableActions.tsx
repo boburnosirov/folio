@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Pencil, Trash2, Eye, EyeOff, Upload } from "lucide-react";
 import { deleteBook, toggleBookVisibility } from "../actions";
 
 interface Props {
   bookId: number;
   isPublic: boolean;
+  hasTxt?: boolean;
 }
 
-export default function BooksTableActions({ bookId, isPublic }: Props) {
+export default function BooksTableActions({ bookId, isPublic, hasTxt }: Props) {
   const [deleting, startDelete] = useTransition();
   const [toggling, startToggle] = useTransition();
 
@@ -41,6 +42,13 @@ export default function BooksTableActions({ bookId, isPublic }: Props) {
           <Eye className="h-3.5 w-3.5" />
         )}
       </button>
+      <Link
+        href={`/admin/books/${bookId}/upload`}
+        className={`rounded-lg p-1.5 hover:bg-foreground/[0.06] ${hasTxt ? "text-emerald-500" : "text-foreground/35 hover:text-foreground"}`}
+        title={hasTxt ? "Файлы загружены" : "Загрузить файлы"}
+      >
+        <Upload className="h-3.5 w-3.5" />
+      </Link>
       <Link
         href={`/admin/books/${bookId}/edit`}
         className="rounded-lg p-1.5 text-foreground/35 hover:bg-foreground/[0.06] hover:text-foreground"

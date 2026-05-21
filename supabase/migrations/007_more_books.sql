@@ -115,7 +115,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'A debut collection of stories that blend the real and unreal to explore desires, identity, and female experience.',
  'https://covers.openlibrary.org/b/isbn/9781555977887-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- Russian versions of new fiction
 INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, language, year_published, description, cover_url, is_featured, is_public) VALUES
@@ -176,7 +176,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Письмо сына матери, которая не умеет читать — пронзительный портрет семьи и медитация об идентичности.',
  'https://covers.openlibrary.org/b/isbn/9780525562023-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════
 --  ROMANCE
@@ -253,7 +253,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'After a disastrous holiday, a young woman wakes up reliving the same week over and over.',
  'https://covers.openlibrary.org/b/isbn/9781982123017-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- Russian versions of new romance
 INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, language, year_published, description, cover_url, is_featured, is_public) VALUES
@@ -293,7 +293,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Двое незнакомцев встречаются каждый год 9 ноября на протяжении пяти лет, влюбляясь всё глубже.',
  'https://covers.openlibrary.org/b/isbn/9781501110375-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════
 --  SELF-DEVELOPMENT
@@ -370,7 +370,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Two sisters explain the science behind stress and burnout, and how to complete the stress cycle.',
  'https://covers.openlibrary.org/b/isbn/9781984818324-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- Russian versions
 INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, language, year_published, description, cover_url, is_featured, is_public) VALUES
@@ -417,7 +417,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Актёр-оскароносец делится уроками и историями из своей бурной, нежной, авантюрной жизни.',
  'https://covers.openlibrary.org/b/isbn/9780593139134-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════
 --  BUSINESS & SUCCESS
@@ -494,7 +494,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'The classic on the psychology of persuasion. Six principles that guide human behavior.',
  'https://covers.openlibrary.org/b/isbn/9780062937650-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- Russian versions
 INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, language, year_published, description, cover_url, is_featured, is_public) VALUES
@@ -541,7 +541,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Классика психологии убеждения. Шесть принципов, которые управляют поведением людей.',
  'https://covers.openlibrary.org/b/isbn/9780062937650-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════
 --  SCIENCE
@@ -618,7 +618,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Why some people succeed far more than others — the hidden factors of exceptional achievement.',
  'https://covers.openlibrary.org/b/isbn/9780316017930-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- Russian versions
 INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, language, year_published, description, cover_url, is_featured, is_public) VALUES
@@ -672,7 +672,7 @@ INSERT INTO public.books (slug, title, title_ru, author_id, category_slug, langu
  'Суперструны, скрытые измерения и поиск единой теории всего.',
  'https://covers.openlibrary.org/b/isbn/9780393058581-L.jpg', false, true)
 
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT ON CONSTRAINT books_slug_key DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════
 --  Link new companion slugs (EN ↔ RU)
