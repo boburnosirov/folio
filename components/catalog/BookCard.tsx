@@ -64,6 +64,16 @@ export function BookCard({ book }: BookCardProps) {
         {book.year_published && (
           <p className="mt-0.5 text-[10px] text-foreground/35">{book.year_published}</p>
         )}
+        {book.read_count > 0 && (
+          <p className="mt-0.5 text-[10px] text-foreground/30">
+            {book.read_count.toLocaleString("ru")} читали
+          </p>
+        )}
+        {book.avg_rating > 0 && (
+          <p className="mt-0.5 text-[10px] text-amber-500/80">
+            ★ {book.avg_rating.toFixed(1)}
+          </p>
+        )}
       </div>
     </Link>
   );

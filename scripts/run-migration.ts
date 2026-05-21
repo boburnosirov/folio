@@ -1,11 +1,11 @@
 /**
- * Runs 001_initial_schema.sql against the Supabase project.
- * Splits on statement boundaries and executes via pg (direct Postgres).
+ * Runs any SQL migration file against the Supabase project.
+ * Usage: npm run migrate -- supabase/migrations/003_fix_covers.sql
  *
  * Requires DATABASE_URL in .env.local:
  *   DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
  *
- * Get the URL from: Supabase dashboard → Settings → Database → Connection string → URI
+ * Get the URL from: Supabase Dashboard → Settings → Database → Connection string → URI (Transaction mode)
  */
 
 import "dotenv/config";
@@ -20,42 +20,37 @@ if (!dbUrl) {
   process.exit(1);
 }
 
+const file = process.argv[2];
+if (!file) {
+  console.error("\n❌  No file specified");
+  console.error("   Usage: npm run migrate -- supabase/migrations/003_fix_covers.sql\n");
+  process.exit(1);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { Client } = require("pg");
 
 async function migrate() {
-  const sql = readFileSync(
-    join(process.cwd(), "supabase/migrations/001_initial_schema.sql"),
-    "utf8"
-  );
+  const filePath = join(process.cwd(), file);
+  console.log(`\n📄  Running: ${file}`);
 
+  const sql = readFileSync(filePath, "utf8");
   const client = new Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } });
   await client.connect();
   console.log("✅  Connected to database");
 
-  // Split on semicolons at top-level (skip empty)
-  const statements = sql
-    .split(/;\s*\n/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith("--"));
-
-  let ok = 0;
-  for (const stmt of statements) {
-    try {
-      await client.query(stmt);
-      ok++;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("already exists")) {
-        console.log(`   ⚠️  skipped (already exists)`);
-      } else {
-        console.error(`   ❌  ${msg.slice(0, 120)}`);
-      }
-    }
+  // Execute the whole file as one transaction
+  try {
+    await client.query(sql);
+    console.log(`\n✅  Migration done: ${file}\n`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`\n❌  Error: ${msg}\n`);
+    await client.end();
+    process.exit(1);
   }
 
   await client.end();
-  console.log(`\n✅  Migration done — ${ok}/${statements.length} statements\n`);
 }
 
 migrate().catch((err) => { console.error(err); process.exit(1); });

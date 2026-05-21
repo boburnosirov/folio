@@ -39,6 +39,33 @@ export interface Book {
   read_count: number;
   download_count: number;
   created_at: string;
+  // New fields (migration 006)
+  companion_slug: string | null;
+  avg_rating: number;
+  rating_count: number;
+  weekly_read_count: number;
+  monthly_read_count: number;
+}
+
+export interface BookRating {
+  id: number;
+  user_id: string;
+  book_id: number;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+export interface UserFavorite {
+  user_id: string;
+  book_id: number;
+  created_at: string;
+}
+
+export interface UserReadLater {
+  user_id: string;
+  book_id: number;
+  created_at: string;
 }
 
 export interface BookWithAuthor extends Book {
@@ -82,8 +109,23 @@ export type Database = {
       };
       books: {
         Row: Book;
-        Insert: Omit<Book, "id" | "read_count" | "download_count" | "created_at">;
+        Insert: Omit<Book, "id" | "read_count" | "download_count" | "avg_rating" | "rating_count" | "weekly_read_count" | "monthly_read_count" | "created_at">;
         Update: Partial<Omit<Book, "id" | "created_at">>;
+      };
+      book_ratings: {
+        Row: BookRating;
+        Insert: Omit<BookRating, "id" | "created_at">;
+        Update: Partial<Omit<BookRating, "id" | "user_id" | "book_id" | "created_at">>;
+      };
+      user_favorites: {
+        Row: UserFavorite;
+        Insert: UserFavorite;
+        Update: never;
+      };
+      user_read_later: {
+        Row: UserReadLater;
+        Insert: UserReadLater;
+        Update: never;
       };
       reading_progress: {
         Row: ReadingProgress;

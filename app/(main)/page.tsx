@@ -3,6 +3,7 @@ import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { CounterSection } from "@/components/home/CounterSection";
 import { HeroSection } from "@/components/home/HeroSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
+import { MostReadSection } from "@/components/home/MostReadSection";
 import { QuoteSection } from "@/components/home/QuoteSection";
 
 const jsonLd = {
@@ -52,6 +53,10 @@ export default function HomePage() {
       </div>
 
       <div aria-hidden className="pointer-events-none relative z-10 h-16 bg-gradient-to-b from-transparent to-background" />
+
+      <div className="relative z-10 bg-background">
+        <MostReadSection />
+      </div>
 
       <div className="relative z-10 bg-background">
         <HowItWorksSection />

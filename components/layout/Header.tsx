@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BookOpen, Menu, Search, X } from "lucide-react";
+import { BookOpen, Menu, Search, X, Heart, Bookmark } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -15,6 +15,8 @@ const navLinks = [
   { href: "/categories/russian-classics", label: "Классика" },
   { href: "/categories/uzbek-classics", label: "Узбекская классика" },
   { href: "/categories/philosophy", label: "Философия" },
+  { href: "/favorites", label: "Избранное" },
+  { href: "/read-later", label: "Читать потом" },
 ];
 
 export function Header() {
@@ -50,6 +52,20 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <Link
+            href="/favorites"
+            aria-label="Избранное"
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-9 w-9 rounded-full text-foreground/62 hover:text-foreground")}
+          >
+            <Heart className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/read-later"
+            aria-label="Читать потом"
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-9 w-9 rounded-full text-foreground/62 hover:text-foreground")}
+          >
+            <Bookmark className="h-4 w-4" />
+          </Link>
           <Link
             href="/catalog?search=true"
             aria-label="Поиск"

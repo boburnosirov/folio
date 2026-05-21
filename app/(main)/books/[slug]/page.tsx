@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getBook, getRelatedBooks, incrementReadCount } from "@/lib/books";
+import { getBook, getRelatedBooks, incrementReadCount, getCompanionBook } from "@/lib/books";
 import { createClient } from "@/lib/supabase/server";
+import { getRatings, getUserRating } from "@/app/actions/ratings";
+import { isFavorite, isReadLater } from "@/app/actions/favorites";
 import { BookDetail } from "./BookDetail";
 
 const BASE_URL = "https://folio-ten-ashy.vercel.app";
@@ -52,7 +54,7 @@ export default async function BookPage({ params }: Props) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [relatedBooks, bookmarkRow] = await Promise.all([
+  const [relatedBooks, bookmarkRow, companionBook, ratings, userRating, favStatus, rlStatus] = await Promise.all([
     getRelatedBooks(book.id, book.category_slug, book.author_id),
     user
       ? supabase
@@ -63,6 +65,11 @@ export default async function BookPage({ params }: Props) {
           .limit(1)
           .then(({ data }) => (data ?? []).length > 0)
       : Promise.resolve(false),
+    book.companion_slug ? getCompanionBook(book.companion_slug) : Promise.resolve(null),
+    getRatings(book.id),
+    user ? getUserRating(book.id) : Promise.resolve(null),
+    user ? isFavorite(book.id) : Promise.resolve(false),
+    user ? isReadLater(book.id) : Promise.resolve(false),
   ]);
 
   // Increment read count (fire-and-forget)
@@ -97,6 +104,11 @@ export default async function BookPage({ params }: Props) {
         relatedBooks={relatedBooks}
         isBookmarked={bookmarkRow}
         isLoggedIn={!!user}
+        companionBook={companionBook}
+        ratings={ratings}
+        userRating={userRating}
+        isFavorite={favStatus}
+        isReadLater={rlStatus}
       />
     </>
   );

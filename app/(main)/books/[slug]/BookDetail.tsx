@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Download, Calendar, Globe } from "lucide-react";
-import type { BookFull, BookWithAuthor } from "@/lib/types/database";
+import { ArrowLeft, BookOpen, Download, Calendar, Globe, Eye } from "lucide-react";
+import type { BookFull, BookWithAuthor, BookRating } from "@/lib/types/database";
 import { BookmarkButton } from "@/components/books/BookmarkButton";
+import { FavoriteButton } from "@/components/books/FavoriteButton";
+import { ReadLaterButton } from "@/components/books/ReadLaterButton";
 import { RelatedBooks } from "@/components/books/RelatedBooks";
+import { RatingsSection } from "@/components/books/RatingsSection";
+import { LanguageSwitcher } from "@/components/books/LanguageSwitcher";
 
 const LANG_NAMES: Record<string, string> = {
   ru: "Русский", en: "English", uz: "Ўзбекча",
@@ -23,9 +27,14 @@ interface Props {
   relatedBooks: BookWithAuthor[];
   isBookmarked: boolean;
   isLoggedIn: boolean;
+  companionBook: BookWithAuthor | null;
+  ratings: BookRating[];
+  userRating: BookRating | null;
+  isFavorite: boolean;
+  isReadLater: boolean;
 }
 
-export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Props) {
+export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, companionBook, ratings, userRating, isFavorite, isReadLater }: Props) {
   const title = book.title_ru ?? book.title;
   const authorName = book.authors ? (book.authors.name_ru ?? book.authors.name) : null;
 
@@ -38,7 +47,7 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Pro
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        <motion.div {...fade(0)}>
+        <motion.div {...fade(0)} className="flex items-center justify-between">
           <Link
             href="/catalog"
             className="mb-8 inline-flex items-center gap-1.5 text-sm text-foreground/50 transition-colors hover:text-foreground"
@@ -46,12 +55,17 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Pro
             <ArrowLeft className="h-3.5 w-3.5" />
             Каталог
           </Link>
+          <LanguageSwitcher
+            currentSlug={book.slug}
+            currentLanguage={book.language}
+            companion={companionBook}
+          />
         </motion.div>
 
         <div className="grid gap-10 md:grid-cols-[260px_1fr]">
           {/* Cover */}
           <motion.div
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-3"
             initial={{ opacity: 0, scale: 0.96, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -80,7 +94,15 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Pro
               </Link>
             </motion.div>
 
-            <motion.div {...fade(0.23)}>
+            <motion.div {...fade(0.22)}>
+              <FavoriteButton bookId={book.id} initialIsFavorite={isFavorite} isLoggedIn={isLoggedIn} />
+            </motion.div>
+
+            <motion.div {...fade(0.24)}>
+              <ReadLaterButton bookId={book.id} initialIsReadLater={isReadLater} isLoggedIn={isLoggedIn} />
+            </motion.div>
+
+            <motion.div {...fade(0.26)}>
               <BookmarkButton
                 bookId={book.id}
                 bookSlug={book.slug}
@@ -90,7 +112,7 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Pro
             </motion.div>
 
             {downloads.length > 0 && (
-              <motion.div className="flex flex-col gap-2" {...fade(0.25)}>
+              <motion.div className="flex flex-col gap-2" {...fade(0.28)}>
                 {downloads.map((d) => (
                   <a
                     key={d.label}
@@ -157,8 +179,14 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Pro
                 </span>
               )}
               {book.read_count > 0 && (
-                <span className="rounded-full border border-foreground/10 bg-foreground/[0.04] px-3 py-1 text-xs text-foreground/55">
+                <span className="flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/[0.04] px-3 py-1 text-xs text-foreground/55">
+                  <Eye className="h-3 w-3" />
                   {book.read_count.toLocaleString("ru")} читателей
+                </span>
+              )}
+              {(book.avg_rating ?? 0) > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  ★ {(book.avg_rating ?? 0).toFixed(1)} / 10
                 </span>
               )}
             </motion.div>
@@ -197,8 +225,21 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn }: Pro
           </div>
         </div>
 
+        {/* Ratings & Comments */}
+        <motion.div {...fade(0.42)}>
+          <RatingsSection
+            bookId={book.id}
+            bookTitle={title}
+            ratings={ratings}
+            userRating={userRating}
+            avgRating={book.avg_rating ?? 0}
+            ratingCount={book.rating_count ?? 0}
+            isLoggedIn={isLoggedIn}
+          />
+        </motion.div>
+
         {/* Related books */}
-        <motion.div {...fade(0.4)}>
+        <motion.div {...fade(0.48)}>
           <RelatedBooks books={relatedBooks} />
         </motion.div>
       </div>

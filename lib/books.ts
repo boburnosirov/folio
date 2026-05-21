@@ -39,6 +39,7 @@ export async function getBooks(query: BooksQuery = {}): Promise<BookWithAuthor[]
     .select("*, authors(*)")
     .eq("is_public", true)
     .order("is_featured", { ascending: false })
+    .order("avg_rating", { ascending: false })
     .order("read_count", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -114,4 +115,27 @@ export async function getBooksByCategory(
 export async function incrementReadCount(bookId: number): Promise<void> {
   const supabase = await createClient();
   await supabase.rpc("increment_read_count", { book_id: bookId });
+}
+
+export async function getCompanionBook(companionSlug: string): Promise<BookWithAuthor | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("books")
+    .select("*, authors(*)")
+    .eq("slug", companionSlug)
+    .eq("is_public", true)
+    .single();
+  return data as BookWithAuthor | null;
+}
+
+export async function getMostReadBooks(period: "week" | "month" | "all", limit = 5): Promise<BookWithAuthor[]> {
+  const supabase = await createClient();
+  const orderCol = period === "week" ? "weekly_read_count" : period === "month" ? "monthly_read_count" : "read_count";
+  const { data } = await supabase
+    .from("books")
+    .select("*, authors(*)")
+    .eq("is_public", true)
+    .order(orderCol, { ascending: false })
+    .limit(limit);
+  return (data ?? []) as BookWithAuthor[];
 }
