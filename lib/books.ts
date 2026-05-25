@@ -15,13 +15,11 @@ export async function getBooks(query: BooksQuery = {}): Promise<BookWithAuthor[]
   const { category, language, search, featured, limit = 24, offset = 0 } = query;
 
   if (search) {
-    // Search by title AND author name via SQL function
     const { data, error } = await supabase
       .rpc("search_books", { query: search })
       .select("*, authors(*)")
       .range(offset, offset + limit - 1);
     if (error) {
-      // Fallback to ilike if rpc fails
       const { data: fallback } = await supabase
         .from("books")
         .select("*, authors(*)")

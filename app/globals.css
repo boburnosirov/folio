@@ -162,24 +162,53 @@
   }
 }
 
-/* ─── Film grain overlay ──────────────────────────────────── */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.028;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 200px;
+/* ─── Performance baseline ────────────────────────────────── */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
+body { text-rendering: optimizeSpeed; }
+img, picture, svg, video { content-visibility: auto; }
 
 /* ─── Mobile hero floating book silhouettes ───────────────── */
 @keyframes floatBook {
   0%   { transform: translateY(0px) rotate(var(--rot, 4deg)); }
   100% { transform: translateY(-12px) rotate(var(--rot, 4deg)); }
 }
+
+/* ─── Hero books float (CSS-only, no JS) ──────────────────── */
+@keyframes heroFloat {
+  0%   { transform: translateY(0) rotate(var(--rot, 0deg)); }
+  100% { transform: translateY(-10px) rotate(var(--rot, 0deg)); }
+}
+.hero-book { transform: rotate(var(--rot, 0deg)); }
+
+/* ─── Fade-in on scroll for sections (CSS-only) ──────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ─── Smooth card hover ──────────────────────────────────── */
+.book-card { transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s; }
+.book-card:hover { transform: translateY(-4px); }
+
+/* ─── Reader page slide (CSS-only) ───────────────────────── */
+@keyframes readerPageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reader-page { animation: readerPageIn 0.22s ease-out both; }
+
+/* ─── Hide scrollbar but keep functional ─────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
 
 /* ─── Perspective utility ─────────────────────────────────── */
 .perspective-\[1000px\] { perspective: 1000px; }

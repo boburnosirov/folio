@@ -1,3 +1,5 @@
+export const revalidate = 300; // Revalidate stats every 5 minutes
+
 import { CarouselPlaceholder } from "@/components/home/CarouselPlaceholder";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { CounterSection } from "@/components/home/CounterSection";

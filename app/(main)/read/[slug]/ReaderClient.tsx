@@ -418,25 +418,43 @@ export default function ReaderClient({ book }: { book: BookFull }) {
   // ── Scroll to top on page change
   useEffect(() => { containerRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, [currentPage]);
 
-  // ── Fetch text
+  // ── Fetch + parse text (chunked off main thread)
   useEffect(() => {
-    if (book.txt_url) {
+    let cancelled = false;
+
+    async function loadAndParse(url: string, isJson = false) {
       setStatus("loading");
-      fetch(book.txt_url)
-        .then(r => { if (!r.ok) throw new Error(r.statusText); return r.text(); })
-        .then(text => { setPages(splitIntoPages(text, WORDS_PER_PAGE)); setStatus("ok"); })
-        .catch(() => setStatus("error"));
-      return;
+      try {
+        const res = await fetch(url, { cache: "force-cache" });
+        if (!res.ok) throw new Error(String(res.status));
+        const text = isJson ? (await res.json() as { text: string }).text : await res.text();
+        if (cancelled) return;
+
+        // Run splitter via requestIdleCallback if available, otherwise microtask
+        const split = () => {
+          if (cancelled) return;
+          const result = splitIntoPages(text, WORDS_PER_PAGE);
+          if (!cancelled) {
+            setPages(result);
+            setStatus("ok");
+          }
+        };
+        // @ts-ignore — requestIdleCallback may not exist in TS lib but is fine
+        if (typeof window !== "undefined" && (window as any).requestIdleCallback) {
+          (window as any).requestIdleCallback(split, { timeout: 1500 });
+        } else {
+          setTimeout(split, 0);
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
     }
-    if (book.gutenberg_id) {
-      setStatus("loading");
-      fetch(`/api/gutenberg/${book.gutenberg_id}`)
-        .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() as Promise<{ text: string }>; })
-        .then(({ text }) => { setPages(splitIntoPages(text, WORDS_PER_PAGE)); setStatus("ok"); })
-        .catch(() => setStatus("error"));
-      return;
-    }
-    setStatus("error");
+
+    if (book.txt_url)            loadAndParse(book.txt_url);
+    else if (book.gutenberg_id)  loadAndParse(`/api/gutenberg/${book.gutenberg_id}`, true);
+    else                          setStatus("error");
+
+    return () => { cancelled = true; };
   }, [book.txt_url, book.gutenberg_id]);
 
   // ── Navigation
@@ -610,37 +628,28 @@ export default function ReaderClient({ book }: { book: BookFull }) {
           )}
 
           {status === "ok" && (
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.article
-                key={currentPage}
-                custom={direction}
-                initial={{ opacity: 0, x: direction * 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: direction * -30 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              >
-                {currentPage === 0 && (
-                  <div className="mb-10 pb-8 text-center" style={{ borderBottom: `1px solid ${theme.border}` }}>
-                    <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl"
-                      style={{ fontFamily: FONT_FAMILIES[fontIndex].value, color: theme.fg }}>
-                      {title}
-                    </h1>
-                    {authorName && <p className="mt-3 text-base" style={{ color: theme.fg, opacity: 0.5 }}>{authorName}</p>}
-                  </div>
-                )}
-
-                <div style={{ ...fontStyle, color: theme.fg }}>
-                  {pageHtml.map((html, i) => (
-                    <p
-                      key={i}
-                      className="mb-5 text-justify"
-                      style={{ lineHeight: 1.9, opacity: 0.88 }}
-                      dangerouslySetInnerHTML={{ __html: html }}
-                    />
-                  ))}
+            <article key={currentPage} className="reader-page">
+              {currentPage === 0 && (
+                <div className="mb-10 pb-8 text-center" style={{ borderBottom: `1px solid ${theme.border}` }}>
+                  <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl"
+                    style={{ fontFamily: FONT_FAMILIES[fontIndex].value, color: theme.fg }}>
+                    {title}
+                  </h1>
+                  {authorName && <p className="mt-3 text-base" style={{ color: theme.fg, opacity: 0.5 }}>{authorName}</p>}
                 </div>
-              </motion.article>
-            </AnimatePresence>
+              )}
+
+              <div style={{ ...fontStyle, color: theme.fg }}>
+                {pageHtml.map((html, i) => (
+                  <p
+                    key={i}
+                    className="mb-5 text-justify"
+                    style={{ lineHeight: 1.9, opacity: 0.88 }}
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                ))}
+              </div>
+            </article>
           )}
         </div>
       </main>

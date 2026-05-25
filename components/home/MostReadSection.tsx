@@ -1,58 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getMostReadBooks } from "@/lib/books";
 import { Eye, TrendingUp, BookOpen } from "lucide-react";
-
-const TABS = [
-  { key: "week" as const, label: "За неделю", icon: TrendingUp },
-  { key: "month" as const, label: "За месяц", icon: Eye },
-  { key: "all" as const, label: "Всё время", icon: BookOpen },
-];
-
-async function TopList({ period }: { period: "week" | "month" | "all" }) {
-  const books = await getMostReadBooks(period, 5);
-  if (books.length === 0) return (
-    <p className="text-sm text-foreground/35 py-8 text-center">Данных пока нет</p>
-  );
-  return (
-    <ol className="flex flex-col gap-3">
-      {books.map((book, i) => {
-        const count = period === "week" ? book.weekly_read_count : period === "month" ? book.monthly_read_count : book.read_count;
-        const title = book.title_ru ?? book.title;
-        const author = book.authors?.name_ru ?? book.authors?.name;
-        return (
-          <li key={book.id}>
-            <Link
-              href={`/books/${book.slug}`}
-              className="group flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-foreground/[0.04]"
-            >
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-foreground/[0.06] text-xs font-bold text-foreground/40">
-                {i + 1}
-              </span>
-              {book.cover_url && (
-                <img
-                  src={book.cover_url}
-                  alt={title}
-                  className="h-12 w-8 flex-shrink-0 rounded-lg object-cover shadow-sm"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground group-hover:text-[#0071e3] transition-colors">
-                  {title}
-                </p>
-                {author && (
-                  <p className="truncate text-xs text-foreground/45">{author}</p>
-                )}
-              </div>
-              <span className="flex-shrink-0 text-xs text-foreground/30 tabular-nums">
-                {(count ?? 0).toLocaleString("ru")}
-              </span>
-            </Link>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
 
 export async function MostReadSection() {
   const [weekBooks, monthBooks, allBooks] = await Promise.all([
@@ -62,9 +11,9 @@ export async function MostReadSection() {
   ]);
 
   const sections = [
-    { key: "week", label: "За неделю", icon: TrendingUp, books: weekBooks, countKey: "weekly_read_count" as const },
-    { key: "month", label: "За месяц", icon: Eye, books: monthBooks, countKey: "monthly_read_count" as const },
-    { key: "all", label: "Всё время", icon: BookOpen, books: allBooks, countKey: "read_count" as const },
+    { key: "week",  label: "За неделю", icon: TrendingUp, books: weekBooks,  countKey: "weekly_read_count" as const },
+    { key: "month", label: "За месяц",  icon: Eye,        books: monthBooks, countKey: "monthly_read_count" as const },
+    { key: "all",   label: "Всё время", icon: BookOpen,   books: allBooks,   countKey: "read_count" as const },
   ];
 
   return (
@@ -101,18 +50,26 @@ export async function MostReadSection() {
                     <li key={book.id}>
                       <Link
                         href={`/books/${book.slug}`}
+                        prefetch={false}
                         className="group flex items-center gap-3 rounded-xl p-1.5 transition-colors hover:bg-foreground/[0.04]"
                       >
                         <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-foreground/[0.06] text-[10px] font-bold text-foreground/40">
                           {i + 1}
                         </span>
-                        {book.cover_url && (
-                          <img
-                            src={book.cover_url}
-                            alt={title}
-                            className="h-10 w-7 flex-shrink-0 rounded object-cover shadow-sm"
-                            loading="lazy"
-                          />
+                        {book.cover_url ? (
+                          <div className="relative h-10 w-7 flex-shrink-0 overflow-hidden rounded">
+                            <Image
+                              src={book.cover_url}
+                              alt={title}
+                              fill
+                              sizes="28px"
+                              className="object-cover"
+                              loading="lazy"
+                              unoptimized={book.cover_url.startsWith("http") && !book.cover_url.includes("supabase")}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-7 flex-shrink-0 rounded bg-foreground/10" />
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-semibold text-foreground group-hover:text-[#0071e3] transition-colors">
