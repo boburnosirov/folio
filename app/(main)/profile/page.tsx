@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, BookMarked, LogOut, Mail, Clock, Trophy } from "lucide-react";
+import { BookOpen, BookMarked, LogOut, Mail, Clock, Trophy, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileLogout } from "./ProfileLogout";
 
@@ -8,6 +8,8 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/profile");
+
+  const isAdmin = !!user.email && user.email === process.env.ADMIN_EMAIL;
 
   // Fetch reading progress with book info
   const { data: progressRows } = await supabase
@@ -77,6 +79,27 @@ export default async function ProfilePage() {
             </div>
           ))}
         </div>
+
+        {/* Admin panel — only for ADMIN_EMAIL */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="mb-8 flex items-center gap-3 rounded-2xl border border-[#0071e3]/20 bg-gradient-to-r from-[#0071e3]/10 to-[#0071e3]/[0.04] p-4 transition-all hover:border-[#0071e3]/40 hover:from-[#0071e3]/15 hover:to-[#0071e3]/[0.08]"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0071e3] text-white shadow-[0_6px_18px_rgba(0,113,227,0.35)]">
+              <Shield className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">Администраторская панель</p>
+              <p className="mt-0.5 text-xs text-foreground/55">
+                Управление книгами, авторами и категориями библиотеки
+              </p>
+            </div>
+            <span className="hidden text-xs font-medium text-[#0071e3] sm:inline-block">
+              Открыть →
+            </span>
+          </Link>
+        )}
 
         {/* Reading progress */}
         <section className="mb-10">
