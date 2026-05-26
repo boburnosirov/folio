@@ -89,6 +89,17 @@ async function uploadEpub(slug: string, buf: Buffer): Promise<string | null> {
   return supabase.storage.from("book-files").getPublicUrl(path).data.publicUrl;
 }
 
+/** Returns size of existing supabase EPUB or 0 if not present/error */
+async function existingEpubSize(epubUrl: string | null): Promise<number> {
+  if (!epubUrl) return 0;
+  try {
+    const res = await fetch(epubUrl, { method: "HEAD", signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return 0;
+    const len = parseInt(res.headers.get("content-length") ?? "0", 10);
+    return isNaN(len) ? 0 : len;
+  } catch { return 0; }
+}
+
 async function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 async function main() {
@@ -117,6 +128,14 @@ async function main() {
     const b = books[i];
     const title = b.title_ru ?? b.title;
     console.log(`[${i+1}/${books.length}] ${b.slug} (#${b.gutenberg_id}) — «${title}»`);
+
+    // Skip if Supabase already has a "fat" EPUB (>200KB suggests illustrations included)
+    const existingSize = await existingEpubSize(b.epub_url);
+    if (existingSize > 200_000 && b.epub_url?.includes("supabase")) {
+      console.log(`    ⏭  уже загружен (${(existingSize/1024).toFixed(0)} KB)`);
+      skip.push(b.slug);
+      continue;
+    }
 
     try {
       const dl = await downloadEpubWithImages(b.gutenberg_id);

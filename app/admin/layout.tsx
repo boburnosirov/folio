@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AdminNav from "./AdminNav";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -26,7 +28,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             ADM
           </span>
         </Link>
+
         <AdminNav />
+
+        {/* Settings + back to site at bottom of sidebar */}
+        <div className="mt-auto flex flex-col gap-2 border-t border-foreground/8 pt-4">
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-foreground/40">
+              Оформление
+            </span>
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <SettingsMenu compact />
+            </div>
+          </div>
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-foreground/55 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+          >
+            <ExternalLink className="h-3 w-3" />
+            На сайт
+          </Link>
+        </div>
       </aside>
       <main className="flex-1 overflow-auto">{children}</main>
     </div>

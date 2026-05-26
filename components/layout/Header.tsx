@@ -7,6 +7,7 @@ import { BookOpen, Menu, Search, X, Heart, Bookmark } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
+import { SettingsMenu } from "./SettingsMenu";
 import { UserMenu, UserMenuMobile } from "./UserMenu";
 
 const navLinks = [
@@ -82,10 +83,12 @@ export function Header() {
             <Search className="h-4 w-4" />
           </button>
           <ThemeToggle />
+          <SettingsMenu />
           <UserMenu />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          <SettingsMenu />
           <ThemeToggle />
           <Button
             variant="ghost"
