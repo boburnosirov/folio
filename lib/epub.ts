@@ -268,7 +268,7 @@ function splitHtmlIntoPages(html: string, targetChars: number): EpubPage[] {
 /** Main entry point: fetch EPUB, parse, return paginated content */
 export async function parseEpubFromUrl(url: string, charsPerPage = 1800): Promise<EpubContent | null> {
   try {
-    const resp = await fetch(url, { cache: "force-cache" });
+    const resp = await fetch(url);
     if (!resp.ok) return null;
     const buf = await resp.arrayBuffer();
     const zip = await JSZip.loadAsync(buf);

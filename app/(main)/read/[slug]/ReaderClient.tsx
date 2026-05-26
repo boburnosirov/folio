@@ -353,13 +353,18 @@ export default function ReaderClient({ book }: { book: BookFull }) {
   useEffect(() => {
     let cancelled = false;
 
+    // Cache-buster to invalidate stale browser caches from earlier broken uploads.
+    // Bump this version when re-uploading book content.
+    const CACHE_BUST = "v=3";
+    const bust = (u: string) => u + (u.includes("?") ? "&" : "?") + CACHE_BUST;
+
     async function load() {
       setStatus("loading");
 
       // Try EPUB first (has images)
       if (book.epub_url) {
         try {
-          const epub = await parseEpubFromUrl(book.epub_url, CHARS_PER_PAGE);
+          const epub = await parseEpubFromUrl(bust(book.epub_url), CHARS_PER_PAGE);
           if (cancelled) {
             if (epub) revokeBlobUrls(epub.blobUrls);
             return;
@@ -378,7 +383,7 @@ export default function ReaderClient({ book }: { book: BookFull }) {
 
       // TXT fallback
       const url = book.txt_url
-        ? book.txt_url
+        ? bust(book.txt_url)
         : book.gutenberg_id ? `/api/gutenberg/${book.gutenberg_id}` : null;
 
       if (!url) {
@@ -387,7 +392,7 @@ export default function ReaderClient({ book }: { book: BookFull }) {
       }
 
       try {
-        const res = await fetch(url, { cache: "force-cache" });
+        const res = await fetch(url);
         if (!res.ok) throw new Error();
         const isJson = !book.txt_url && book.gutenberg_id;
         const text = isJson ? (await res.json() as { text: string }).text : await res.text();
