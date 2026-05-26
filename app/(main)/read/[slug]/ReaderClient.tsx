@@ -2,16 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Settings2, X,
   BookOpen, AlertCircle, Loader2, Sun, Moon, Coffee,
+  Maximize2, Minimize2,
 } from "lucide-react";
 import type { BookFull } from "@/lib/types/database";
 import { createClient } from "@/lib/supabase/client";
+import { parseEpubFromUrl, splitTextIntoPages, revokeBlobUrls, type EpubPage } from "@/lib/epub";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const WORDS_PER_PAGE = 350;
+const CHARS_PER_PAGE = 1800;
 const STORAGE_KEY   = (slug: string) => `folio_read_${slug}`;
 const HIGHLIGHT_KEY = (slug: string) => `folio_hl_${slug}`;
 
@@ -42,115 +43,25 @@ interface Highlight {
   color: string;
 }
 
-// ─── Text splitting ───────────────────────────────────────────────────────────
-function splitIntoPages(raw: string, wordsPerPage: number): string[] {
-  if (!raw.trim()) return [];
-
-  // Try paragraph-based (double newline) split
-  let paragraphs = raw.split(/\n{2,}/).map(p => p.replace(/\n/g, " ").trim()).filter(p => p.length > 2);
-
-  // Fallback: if fewer than 5 paragraphs (PDF-style continuous text), split by sentences
-  if (paragraphs.length < 5) {
-    const sentences = raw.replace(/\n+/g, " ").match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) ?? [];
-    const grouped: string[] = [];
-    let current = "";
-    for (const s of sentences) {
-      if ((current + s).split(/\s+/).length > wordsPerPage && current) {
-        grouped.push(current.trim());
-        current = s;
-      } else {
-        current += " " + s;
-      }
-    }
-    if (current.trim()) grouped.push(current.trim());
-    if (grouped.length > 1) return grouped;
-  }
-
-  // Standard paragraph grouping
-  const pages: string[] = [];
-  let current: string[] = [];
-  let wordCount = 0;
-  for (const para of paragraphs) {
-    const words = para.split(/\s+/).length;
-    if (wordCount + words > wordsPerPage && current.length > 0) {
-      pages.push(current.join("\n\n"));
-      current = [];
-      wordCount = 0;
-    }
-    current.push(para);
-    wordCount += words;
-  }
-  if (current.length > 0) pages.push(current.join("\n\n"));
-  return pages;
-}
-
-// ─── Apply highlights to paragraph text ──────────────────────────────────────
+// ─── Highlight overlay (works on page HTML — wraps text matches with <mark>) ──
 function escHtml(s: string) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-function applyHighlights(text: string, highlights: Highlight[], page: number): string {
-  let html = escHtml(text);
+function applyHighlights(html: string, highlights: Highlight[], page: number): string {
   const pageHl = highlights.filter(h => h.page === page);
+  if (pageHl.length === 0) return html;
+  let result = html;
   for (const h of pageHl) {
+    // Escape regex chars in highlight text
+    const escTextForRegex = h.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const bg = HL_COLORS[h.color]?.bg ?? "#fde047";
-    const escaped = escHtml(h.text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    html = html.replace(
-      new RegExp(escaped, "g"),
-      `<mark data-hl="${h.id}" style="background:${bg};border-radius:3px;padding:0 2px;cursor:pointer">${escHtml(h.text)}</mark>`
-    );
+    // Replace only text nodes (very rough; works because the original is mostly text inside <p>/<h*>)
+    // Use a marker with original text preserved
+    const re = new RegExp(`(?<!<[^>]*?)${escTextForRegex}(?![^<]*?>)`, "g");
+    result = result.replace(re, `<mark data-hl="${h.id}" style="background:${bg};border-radius:3px;padding:0 2px;cursor:pointer">${escHtml(h.text)}</mark>`);
   }
-  return html;
-}
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-function ReaderSkeleton() {
-  return (
-    <div className="animate-pulse space-y-4 px-6 py-8">
-      {[100, 92, 88, 96, 84, 90, 78, 94, 85, 91].map((w, i) => (
-        <div key={i} className="h-4 rounded" style={{ width: `${w}%`, background: "currentColor", opacity: 0.08 }} />
-      ))}
-    </div>
-  );
-}
-
-// ─── Highlight toolbar ────────────────────────────────────────────────────────
-function HighlightToolbar({
-  x, y, onColor, onRemove, hasHighlight, theme,
-}: {
-  x: number; y: number; onColor: (c: string) => void; onRemove: () => void;
-  hasHighlight: boolean; theme: typeof THEMES[ThemeKey];
-}) {
-  return (
-    <div
-      className="fixed z-[100] flex items-center gap-1 rounded-xl border px-2 py-1.5 shadow-2xl"
-      style={{ left: x, top: y - 52, transform: "translateX(-50%)",
-        background: theme.bg, borderColor: theme.border,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.22)" }}
-    >
-      {Object.entries(HL_COLORS).map(([key, val]) => (
-        <button
-          key={key}
-          title={val.label}
-          onClick={() => onColor(key)}
-          className="h-5 w-5 rounded-full border-2 border-white/40 transition-transform hover:scale-110 active:scale-95"
-          style={{ background: val.bg }}
-        />
-      ))}
-      {hasHighlight && (
-        <>
-          <div className="mx-1 h-4 w-px" style={{ background: theme.border }} />
-          <button
-            onClick={onRemove}
-            className="rounded px-1.5 py-0.5 text-[10px] font-medium hover:opacity-70"
-            style={{ color: theme.fg, opacity: 0.5 }}
-          >
-            ✕ убрать
-          </button>
-        </>
-      )}
-    </div>
-  );
+  return result;
 }
 
 // ─── Settings panel ───────────────────────────────────────────────────────────
@@ -166,8 +77,7 @@ function SettingsPanel({
   return (
     <div
       className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border p-4 shadow-2xl"
-      style={{ background: theme.bg, borderColor: theme.border,
-        boxShadow: "0 16px 48px rgba(0,0,0,0.20)" }}
+      style={{ background: theme.bg, borderColor: theme.border, boxShadow: "0 16px 48px rgba(0,0,0,0.20)" }}
     >
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm font-semibold" style={{ color: theme.fg }}>Настройки чтения</p>
@@ -176,44 +86,34 @@ function SettingsPanel({
         </button>
       </div>
 
-      {/* Font size */}
       <div className="mb-4">
         <p className="mb-2 text-xs" style={{ color: theme.fg, opacity: 0.45 }}>Размер шрифта</p>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setFontSize(Math.max(14, fontSize - 2))}
+          <button onClick={() => setFontSize(Math.max(14, fontSize - 2))}
             className="flex h-8 w-8 items-center justify-center rounded-full border text-sm"
-            style={{ borderColor: theme.border, color: theme.fg }}
-          >A−</button>
+            style={{ borderColor: theme.border, color: theme.fg }}>A−</button>
           <span className="flex-1 text-center text-sm font-mono" style={{ color: theme.fg }}>{fontSize}px</span>
-          <button
-            onClick={() => setFontSize(Math.min(28, fontSize + 2))}
+          <button onClick={() => setFontSize(Math.min(28, fontSize + 2))}
             className="flex h-8 w-8 items-center justify-center rounded-full border text-sm"
-            style={{ borderColor: theme.border, color: theme.fg }}
-          >A+</button>
+            style={{ borderColor: theme.border, color: theme.fg }}>A+</button>
         </div>
       </div>
 
-      {/* Font family */}
       <div className="mb-4">
         <p className="mb-2 text-xs" style={{ color: theme.fg, opacity: 0.45 }}>Шрифт</p>
         <div className="flex gap-2">
           {FONT_FAMILIES.map((f, i) => (
-            <button
-              key={f.label}
-              onClick={() => setFontIndex(i)}
+            <button key={f.label} onClick={() => setFontIndex(i)}
               className="flex-1 rounded-lg border py-1.5 text-xs font-medium transition-colors"
               style={{
                 borderColor: i === fontIndex ? "#0071e3" : theme.border,
                 background: i === fontIndex ? "#0071e310" : "transparent",
                 color: i === fontIndex ? "#0071e3" : theme.fg,
-              }}
-            >{f.label}</button>
+              }}>{f.label}</button>
           ))}
         </div>
       </div>
 
-      {/* Theme */}
       <div>
         <p className="mb-2 text-xs" style={{ color: theme.fg, opacity: 0.45 }}>Тема</p>
         <div className="flex gap-2">
@@ -221,16 +121,13 @@ function SettingsPanel({
             const Icon = t.icon;
             const active = t.key === themeKey;
             return (
-              <button
-                key={t.key}
-                onClick={() => setThemeKey(t.key as ThemeKey)}
+              <button key={t.key} onClick={() => setThemeKey(t.key as ThemeKey)}
                 className="flex flex-1 flex-col items-center gap-1 rounded-xl border py-2 text-xs font-medium transition-all"
                 style={{
                   borderColor: active ? "#0071e3" : theme.border,
                   background: active ? "#0071e310" : t.bg,
                   color: active ? "#0071e3" : t.fg,
-                }}
-              >
+                }}>
                 <Icon className="h-4 w-4" />
                 {t.label}
               </button>
@@ -250,41 +147,23 @@ function ContinuePrompt({
   theme: typeof THEMES[ThemeKey];
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 12 }}
-      className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl border p-4 shadow-2xl"
-        style={{ background: theme.bg, borderColor: theme.border,
-          boxShadow: "0 16px 48px rgba(0,0,0,0.25)" }}
-      >
-        <p className="text-sm font-semibold" style={{ color: theme.fg }}>
-          Продолжить чтение?
-        </p>
+    <div className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4 fade-up">
+      <div className="w-full max-w-sm rounded-2xl border p-4 shadow-2xl"
+        style={{ background: theme.bg, borderColor: theme.border, boxShadow: "0 16px 48px rgba(0,0,0,0.25)" }}>
+        <p className="text-sm font-semibold" style={{ color: theme.fg }}>Продолжить чтение?</p>
         <p className="mt-1 text-xs" style={{ color: theme.fg, opacity: 0.5 }}>
           Вы остановились на странице {page + 1} из {total}
         </p>
         <div className="mt-3 flex gap-2">
-          <button
-            onClick={onContinue}
-            className="flex-1 rounded-full py-2 text-sm font-semibold text-white"
-            style={{ background: "#0071e3" }}
-          >
+          <button onClick={onContinue} className="flex-1 rounded-full py-2 text-sm font-semibold text-white" style={{ background: "#0071e3" }}>
             Продолжить
           </button>
-          <button
-            onClick={onRestart}
-            className="flex-1 rounded-full border py-2 text-sm"
-            style={{ borderColor: theme.border, color: theme.fg, opacity: 0.6 }}
-          >
+          <button onClick={onRestart} className="flex-1 rounded-full border py-2 text-sm" style={{ borderColor: theme.border, color: theme.fg, opacity: 0.6 }}>
             С начала
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -293,33 +172,31 @@ export default function ReaderClient({ book }: { book: BookFull }) {
   const title      = book.title_ru ?? book.title;
   const authorName = book.authors ? (book.authors.name_ru ?? book.authors.name) : null;
 
-  // ── Content state
   const [status,  setStatus]  = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [pages,   setPages]   = useState<string[]>([]);
+  const [pages,   setPages]   = useState<EpubPage[]>([]);
+  const [sourceType, setSourceType] = useState<"epub" | "txt" | "">("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [direction,   setDirection]   = useState<1 | -1>(1);
 
-  // ── Settings
   const [fontSize,  setFontSizeRaw]  = useState(18);
   const [fontIndex, setFontIndexRaw] = useState(0);
   const [themeKey,  setThemeKeyRaw]  = useState<ThemeKey>("light");
   const [showSettings, setShowSettings] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const theme = THEMES[themeKey];
 
-  // ── Highlights
   const [highlights,    setHighlights]    = useState<Highlight[]>([]);
   const [hlToolbar,     setHlToolbar]     = useState<{ x: number; y: number; text: string } | null>(null);
   const [selectedHlId,  setSelectedHlId]  = useState<string | null>(null);
 
-  // ── Progress & prompts
   const [savedPage,       setSavedPage]       = useState<number | null>(null);
   const [showContinue,    setShowContinue]    = useState(false);
   const [progressLoaded,  setProgressLoaded]  = useState(false);
   const [isLoggedIn,      setIsLoggedIn]      = useState(false);
   const [showBanner,      setShowBanner]      = useState(false);
 
-  const containerRef  = useRef<HTMLDivElement>(null);
-  const saveTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const blobUrlsRef  = useRef<string[]>([]);
 
   // ── Persist helpers
   function persistFontSize(v: number)  { setFontSizeRaw(v);  try { localStorage.setItem("folio_fontSize",  String(v)); } catch {} }
@@ -332,9 +209,11 @@ export default function ReaderClient({ book }: { book: BookFull }) {
       const fs = localStorage.getItem("folio_fontSize");
       const fi = localStorage.getItem("folio_fontIndex");
       const th = localStorage.getItem("folio_theme") as ThemeKey | null;
+      const fsm = localStorage.getItem("folio_fullscreen");
       if (fs) setFontSizeRaw(parseInt(fs));
       if (fi) setFontIndexRaw(parseInt(fi));
       if (th && THEMES[th]) setThemeKeyRaw(th);
+      if (fsm === "1") setFullscreen(true);
     } catch {}
   }, []);
 
@@ -370,7 +249,6 @@ export default function ReaderClient({ book }: { book: BookFull }) {
           if (!isNaN(p) && p > 0) savedP = p;
         }
       }
-
       if (savedP === null) {
         try {
           const raw = localStorage.getItem(STORAGE_KEY(book.slug));
@@ -380,7 +258,6 @@ export default function ReaderClient({ book }: { book: BookFull }) {
           }
         } catch {}
       }
-
       setSavedPage(savedP);
       setProgressLoaded(true);
     });
@@ -389,18 +266,16 @@ export default function ReaderClient({ book }: { book: BookFull }) {
     return () => clearTimeout(t);
   }, [book.slug, book.id]);
 
-  // Show continue prompt once pages loaded + progress known
   useEffect(() => {
     if (progressLoaded && pages.length > 0 && savedPage !== null && savedPage > 0) {
       setShowContinue(true);
     }
   }, [progressLoaded, pages.length, savedPage]);
 
-  // ── Save progress on page change
+  // ── Save progress (debounced)
   useEffect(() => {
     if (!progressLoaded) return;
     try { localStorage.setItem(STORAGE_KEY(book.slug), JSON.stringify({ page: currentPage })); } catch {}
-
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
       const supabase = createClient();
@@ -411,35 +286,77 @@ export default function ReaderClient({ book }: { book: BookFull }) {
         position: String(currentPage), updated_at: new Date().toISOString(),
       });
     }, 1500);
-
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [book.slug, book.id, currentPage, progressLoaded]);
 
   // ── Scroll to top on page change
   useEffect(() => { containerRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, [currentPage]);
 
-  // ── Fetch + parse text (chunked off main thread)
+  // ── Toggle fullscreen mode: hides main site chrome via body class
+  useEffect(() => {
+    if (fullscreen) {
+      document.body.classList.add("reader-fullscreen");
+      try { localStorage.setItem("folio_fullscreen", "1"); } catch {}
+    } else {
+      document.body.classList.remove("reader-fullscreen");
+      try { localStorage.setItem("folio_fullscreen", "0"); } catch {}
+    }
+    return () => { document.body.classList.remove("reader-fullscreen"); };
+  }, [fullscreen]);
+
+  // ── Fetch + parse: EPUB first (if has images), else TXT
   useEffect(() => {
     let cancelled = false;
 
-    async function loadAndParse(url: string, isJson = false) {
+    async function load() {
       setStatus("loading");
+
+      // Try EPUB first (has images)
+      if (book.epub_url) {
+        try {
+          const epub = await parseEpubFromUrl(book.epub_url, CHARS_PER_PAGE);
+          if (cancelled) {
+            if (epub) revokeBlobUrls(epub.blobUrls);
+            return;
+          }
+          if (epub && epub.pages.length > 5) {
+            blobUrlsRef.current = epub.blobUrls;
+            setPages(epub.pages);
+            setSourceType("epub");
+            setStatus("ok");
+            return;
+          }
+          // EPUB had too few pages — fall through to TXT
+          if (epub) revokeBlobUrls(epub.blobUrls);
+        } catch {}
+      }
+
+      // TXT fallback
+      const url = book.txt_url
+        ? book.txt_url
+        : book.gutenberg_id ? `/api/gutenberg/${book.gutenberg_id}` : null;
+
+      if (!url) {
+        if (!cancelled) setStatus("error");
+        return;
+      }
+
       try {
         const res = await fetch(url, { cache: "force-cache" });
-        if (!res.ok) throw new Error(String(res.status));
+        if (!res.ok) throw new Error();
+        const isJson = !book.txt_url && book.gutenberg_id;
         const text = isJson ? (await res.json() as { text: string }).text : await res.text();
         if (cancelled) return;
 
-        // Run splitter via requestIdleCallback if available, otherwise microtask
         const split = () => {
           if (cancelled) return;
-          const result = splitIntoPages(text, WORDS_PER_PAGE);
+          const result = splitTextIntoPages(text, CHARS_PER_PAGE);
           if (!cancelled) {
             setPages(result);
+            setSourceType("txt");
             setStatus("ok");
           }
         };
-        // @ts-ignore — requestIdleCallback may not exist in TS lib but is fine
         if (typeof window !== "undefined" && (window as any).requestIdleCallback) {
           (window as any).requestIdleCallback(split, { timeout: 1500 });
         } else {
@@ -450,38 +367,39 @@ export default function ReaderClient({ book }: { book: BookFull }) {
       }
     }
 
-    if (book.txt_url)            loadAndParse(book.txt_url);
-    else if (book.gutenberg_id)  loadAndParse(`/api/gutenberg/${book.gutenberg_id}`, true);
-    else                          setStatus("error");
-
-    return () => { cancelled = true; };
-  }, [book.txt_url, book.gutenberg_id]);
+    load();
+    return () => {
+      cancelled = true;
+      revokeBlobUrls(blobUrlsRef.current);
+      blobUrlsRef.current = [];
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book.txt_url, book.epub_url, book.gutenberg_id]);
 
   // ── Navigation
   const go = useCallback((dir: 1 | -1) => {
-    setDirection(dir);
     setCurrentPage(p => Math.max(0, Math.min(pages.length - 1, p + dir)));
     setShowContinue(false);
   }, [pages.length]);
 
-  // ── Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,textarea")) return;
-      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(1); }
-      if (e.key === "ArrowLeft") { e.preventDefault(); go(-1); }
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); go(1); }
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
+      else if (e.key.toLowerCase() === "f") { e.preventDefault(); setFullscreen(v => !v); }
+      else if (e.key === "Home") { e.preventDefault(); setCurrentPage(0); }
+      else if (e.key === "End") { e.preventDefault(); setCurrentPage(pages.length - 1); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go]);
+  }, [go, pages.length]);
 
-  // ── Text selection → highlight toolbar
+  // ── Highlight via text selection
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     const sel = window.getSelection();
     const text = sel?.toString().trim() ?? "";
     if (text.length < 3) { setHlToolbar(null); return; }
-
-    // Check if clicking an existing highlight
     const target = e.target as HTMLElement;
     const markEl = target.closest("mark[data-hl]");
     if (markEl) {
@@ -490,7 +408,6 @@ export default function ReaderClient({ book }: { book: BookFull }) {
       setHlToolbar({ x: e.clientX, y: e.clientY, text: markEl.textContent ?? "" });
       return;
     }
-
     setSelectedHlId(null);
     setHlToolbar({ x: e.clientX, y: e.clientY, text });
   }, []);
@@ -504,16 +421,12 @@ export default function ReaderClient({ book }: { book: BookFull }) {
   }
 
   function removeHighlight() {
-    if (selectedHlId) {
-      saveHighlights(highlights.filter(h => h.id !== selectedHlId));
-    } else if (hlToolbar) {
-      saveHighlights(highlights.filter(h => h.text !== hlToolbar.text || h.page !== currentPage));
-    }
+    if (selectedHlId) saveHighlights(highlights.filter(h => h.id !== selectedHlId));
+    else if (hlToolbar) saveHighlights(highlights.filter(h => h.text !== hlToolbar.text || h.page !== currentPage));
     setHlToolbar(null);
     setSelectedHlId(null);
   }
 
-  // ── Close toolbar on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -526,19 +439,18 @@ export default function ReaderClient({ book }: { book: BookFull }) {
   const progress = pages.length > 1 ? Math.round(((currentPage + 1) / pages.length) * 100) : 0;
 
   const fontStyle = useMemo(() => ({
-    fontSize, fontFamily: FONT_FAMILIES[fontIndex].value, lineHeight: 1.9,
+    fontSize, fontFamily: FONT_FAMILIES[fontIndex].value, lineHeight: 1.85,
   }), [fontSize, fontIndex]);
 
-  // ── Current page text with highlights applied
   const pageHtml = useMemo(() => {
-    const text = pages[currentPage] ?? "";
-    return text.split("\n\n").map(para => applyHighlights(para, highlights, currentPage));
+    const p = pages[currentPage];
+    if (!p) return "";
+    return applyHighlights(p.html, highlights, currentPage);
   }, [pages, currentPage, highlights]);
 
   return (
     <div className="flex min-h-screen flex-col" style={{ background: theme.bg, color: theme.fg, transition: "background 0.3s, color 0.3s" }}>
 
-      {/* Progress bar */}
       {status === "ok" && (
         <div className="fixed left-0 right-0 top-0 z-50 h-0.5" style={{ background: theme.surface }}>
           <div className="h-full bg-[#0071e3] transition-all duration-500" style={{ width: `${progress}%` }} />
@@ -547,7 +459,7 @@ export default function ReaderClient({ book }: { book: BookFull }) {
 
       {/* Top bar */}
       <header
-        className="sticky top-0 z-40 flex h-13 items-center justify-between px-4 backdrop-blur-xl sm:px-6"
+        className="sticky top-0 z-40 flex h-13 items-center justify-between px-4 py-2 backdrop-blur-xl sm:px-6"
         style={{ borderBottom: `1px solid ${theme.border}`, background: theme.bg + "e8" }}
       >
         <Link href={`/books/${book.slug}`}
@@ -563,26 +475,40 @@ export default function ReaderClient({ book }: { book: BookFull }) {
           {status === "ok" && (
             <p className="text-xs" style={{ color: theme.fg, opacity: 0.35 }}>
               {currentPage + 1} / {pages.length} · {progress}%
+              {sourceType === "epub" && <span className="ml-1 text-[#0071e3]">· EPUB</span>}
             </p>
           )}
         </div>
 
-        <div className="relative">
+        <div className="flex items-center gap-1">
           <button
-            onClick={() => setShowSettings(s => !s)}
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-            style={{ color: theme.fg, opacity: 0.5 }}
+            onClick={() => setFullscreen(v => !v)}
+            title={fullscreen ? "Выйти из полного экрана (F)" : "Полный экран (F)"}
+            aria-label="Полноэкранный режим"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[currentColor]/10"
+            style={{ color: theme.fg, opacity: 0.55 }}
           >
-            <Settings2 className="h-4 w-4" />
+            {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
-          {showSettings && (
-            <SettingsPanel
-              fontSize={fontSize} setFontSize={persistFontSize}
-              fontIndex={fontIndex} setFontIndex={persistFontIndex}
-              themeKey={themeKey} setThemeKey={persistTheme}
-              onClose={() => setShowSettings(false)} theme={theme}
-            />
-          )}
+
+          <div className="relative">
+            <button
+              onClick={() => setShowSettings(s => !s)}
+              aria-label="Настройки"
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[currentColor]/10"
+              style={{ color: theme.fg, opacity: 0.55 }}
+            >
+              <Settings2 className="h-4 w-4" />
+            </button>
+            {showSettings && (
+              <SettingsPanel
+                fontSize={fontSize} setFontSize={persistFontSize}
+                fontIndex={fontIndex} setFontIndex={persistFontIndex}
+                themeKey={themeKey} setThemeKey={persistTheme}
+                onClose={() => setShowSettings(false)} theme={theme}
+              />
+            )}
+          </div>
         </div>
       </header>
 
@@ -610,16 +536,14 @@ export default function ReaderClient({ book }: { book: BookFull }) {
                 {book.epub_url && (
                   <a href={book.epub_url} download
                     className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-opacity hover:opacity-70"
-                    style={{ borderColor: theme.border, color: theme.fg }}
-                  >
+                    style={{ borderColor: theme.border, color: theme.fg }}>
                     <BookOpen className="h-3.5 w-3.5" />Скачать EPUB
                   </a>
                 )}
                 {book.pdf_url && (
                   <a href={book.pdf_url} download
                     className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-opacity hover:opacity-70"
-                    style={{ borderColor: theme.border, color: theme.fg }}
-                  >
+                    style={{ borderColor: theme.border, color: theme.fg }}>
                     <BookOpen className="h-3.5 w-3.5" />Скачать PDF
                   </a>
                 )}
@@ -639,98 +563,83 @@ export default function ReaderClient({ book }: { book: BookFull }) {
                 </div>
               )}
 
-              <div style={{ ...fontStyle, color: theme.fg }}>
-                {pageHtml.map((html, i) => (
-                  <p
-                    key={i}
-                    className="mb-5 text-justify"
-                    style={{ lineHeight: 1.9, opacity: 0.88 }}
-                    dangerouslySetInnerHTML={{ __html: html }}
-                  />
-                ))}
-              </div>
+              <div
+                className="reader-content"
+                style={{ ...fontStyle, color: theme.fg, opacity: 0.92 }}
+                dangerouslySetInnerHTML={{ __html: pageHtml }}
+              />
             </article>
           )}
         </div>
       </main>
 
       {/* Highlight toolbar */}
-      <AnimatePresence>
-        {hlToolbar && (
-          <motion.div
-            data-hl-toolbar
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.12 }}
-          >
-            <HighlightToolbar
-              x={hlToolbar.x} y={hlToolbar.y}
-              onColor={addHighlight} onRemove={removeHighlight}
-              hasHighlight={!!selectedHlId} theme={theme}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {hlToolbar && (
+        <div
+          data-hl-toolbar
+          className="fixed z-[100] flex items-center gap-1 rounded-xl border px-2 py-1.5 shadow-2xl fade-up"
+          style={{
+            left: hlToolbar.x, top: hlToolbar.y - 52, transform: "translateX(-50%)",
+            background: theme.bg, borderColor: theme.border, boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
+          }}
+        >
+          {Object.entries(HL_COLORS).map(([key, val]) => (
+            <button key={key} title={val.label} onClick={() => addHighlight(key)}
+              className="h-5 w-5 rounded-full border-2 border-white/40 transition-transform hover:scale-110 active:scale-95"
+              style={{ background: val.bg }} />
+          ))}
+          {selectedHlId && (
+            <>
+              <div className="mx-1 h-4 w-px" style={{ background: theme.border }} />
+              <button onClick={removeHighlight}
+                className="rounded px-1.5 py-0.5 text-[10px] font-medium hover:opacity-70"
+                style={{ color: theme.fg, opacity: 0.5 }}>
+                ✕ убрать
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Continue reading prompt */}
-      <AnimatePresence>
-        {showContinue && savedPage !== null && pages.length > 0 && (
-          <ContinuePrompt
-            page={savedPage} total={pages.length}
-            onContinue={() => { setCurrentPage(savedPage!); setShowContinue(false); }}
-            onRestart={() => { setCurrentPage(0); setShowContinue(false); }}
-            theme={theme}
-          />
-        )}
-      </AnimatePresence>
+      {showContinue && savedPage !== null && pages.length > 0 && (
+        <ContinuePrompt
+          page={savedPage} total={pages.length}
+          onContinue={() => { setCurrentPage(savedPage!); setShowContinue(false); }}
+          onRestart={() => { setCurrentPage(0); setShowContinue(false); }}
+          theme={theme}
+        />
+      )}
 
       {/* Bottom navigation */}
       {status === "ok" && (
-        <footer
-          className="sticky bottom-0 z-40 backdrop-blur-xl"
-          style={{ borderTop: `1px solid ${theme.border}`, background: theme.bg + "e8" }}
-        >
+        <footer className="sticky bottom-0 z-40 backdrop-blur-xl"
+          style={{ borderTop: `1px solid ${theme.border}`, background: theme.bg + "e8" }}>
           <div className="mx-auto flex max-w-[680px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
-            <button
-              onClick={() => go(-1)} disabled={currentPage === 0}
+            <button onClick={() => go(-1)} disabled={currentPage === 0}
               className="flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-opacity hover:opacity-70 disabled:pointer-events-none disabled:opacity-25"
-              style={{ borderColor: theme.border, color: theme.fg }}
-            >
+              style={{ borderColor: theme.border, color: theme.fg }}>
               <ChevronLeft className="h-4 w-4" />Назад
             </button>
 
-            {/* Page jump input */}
             <div className="flex items-center gap-1.5 text-xs" style={{ color: theme.fg, opacity: 0.4 }}>
-              <input
-                type="number"
-                min={1}
-                max={pages.length}
-                value={currentPage + 1}
+              <input type="number" min={1} max={pages.length} value={currentPage + 1}
                 onChange={e => {
                   const v = parseInt(e.target.value) - 1;
-                  if (!isNaN(v) && v >= 0 && v < pages.length) {
-                    setDirection(v > currentPage ? 1 : -1);
-                    setCurrentPage(v);
-                  }
+                  if (!isNaN(v) && v >= 0 && v < pages.length) setCurrentPage(v);
                 }}
                 className="w-12 rounded-lg border bg-transparent text-center text-xs outline-none focus:border-[#0071e3]"
-                style={{ borderColor: theme.border, color: theme.fg, padding: "2px 4px" }}
-              />
+                style={{ borderColor: theme.border, color: theme.fg, padding: "2px 4px" }} />
               <span>/</span>
               <span>{pages.length}</span>
             </div>
 
-            <button
-              onClick={() => go(1)} disabled={currentPage === pages.length - 1}
+            <button onClick={() => go(1)} disabled={currentPage === pages.length - 1}
               className="flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-opacity hover:opacity-70 disabled:pointer-events-none disabled:opacity-25"
-              style={{ borderColor: theme.border, color: theme.fg }}
-            >
+              style={{ borderColor: theme.border, color: theme.fg }}>
               Вперёд<ChevronRight className="h-4 w-4" />
             </button>
           </div>
-
-          {/* Progress bar strip */}
           <div className="h-0.5 w-full" style={{ background: theme.surface }}>
             <div className="h-full bg-[#0071e3] transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
@@ -739,13 +648,9 @@ export default function ReaderClient({ book }: { book: BookFull }) {
 
       {/* Anonymous progress banner */}
       {showBanner && status === "ok" && !isLoggedIn && !showContinue && (
-        <div
-          className="fixed bottom-20 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border p-4 shadow-2xl"
-          style={{ background: theme.bg, borderColor: theme.border,
-            boxShadow: "0 16px 48px rgba(0,0,0,0.25)" }}
-        >
-          <button onClick={() => setShowBanner(false)}
-            className="absolute right-3 top-3" style={{ color: theme.fg, opacity: 0.3 }}>
+        <div className="fixed bottom-20 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl border p-4 shadow-2xl"
+          style={{ background: theme.bg, borderColor: theme.border, boxShadow: "0 16px 48px rgba(0,0,0,0.25)" }}>
+          <button onClick={() => setShowBanner(false)} className="absolute right-3 top-3" style={{ color: theme.fg, opacity: 0.3 }}>
             <X className="h-3.5 w-3.5" />
           </button>
           <p className="text-sm font-medium" style={{ color: theme.fg }}>Войдите, чтобы не потерять прогресс</p>
@@ -753,14 +658,13 @@ export default function ReaderClient({ book }: { book: BookFull }) {
             Сейчас прогресс сохраняется только в этом браузере.
           </p>
           <div className="mt-3 flex gap-2">
-            <Link href="/login"
-              className="flex-1 rounded-full py-1.5 text-center text-xs font-semibold text-white"
-              style={{ background: "#0071e3" }}
-            >Войти</Link>
-            <button onClick={() => setShowBanner(false)}
-              className="flex-1 rounded-full border py-1.5 text-xs"
-              style={{ borderColor: theme.border, color: theme.fg, opacity: 0.55 }}
-            >Не сейчас</button>
+            <Link href="/login" className="flex-1 rounded-full py-1.5 text-center text-xs font-semibold text-white" style={{ background: "#0071e3" }}>
+              Войти
+            </Link>
+            <button onClick={() => setShowBanner(false)} className="flex-1 rounded-full border py-1.5 text-xs"
+              style={{ borderColor: theme.border, color: theme.fg, opacity: 0.55 }}>
+              Не сейчас
+            </button>
           </div>
         </div>
       )}
