@@ -292,16 +292,61 @@ export default function ReaderClient({ book }: { book: BookFull }) {
   // ── Scroll to top on page change
   useEffect(() => { containerRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }, [currentPage]);
 
-  // ── Toggle fullscreen mode: hides main site chrome via body class
+  // ── Fullscreen: real browser fullscreen API + hide chrome via body class
   useEffect(() => {
+    const docEl = document.documentElement as any;
+    const doc = document as any;
+
+    const requestFs = () => {
+      const fn = docEl.requestFullscreen
+        ?? docEl.webkitRequestFullscreen
+        ?? docEl.mozRequestFullScreen
+        ?? docEl.msRequestFullscreen;
+      if (fn) {
+        try { fn.call(docEl); } catch {}
+      }
+    };
+    const exitFs = () => {
+      const isFs = !!(doc.fullscreenElement ?? doc.webkitFullscreenElement ?? doc.mozFullScreenElement ?? doc.msFullscreenElement);
+      if (!isFs) return;
+      const fn = doc.exitFullscreen
+        ?? doc.webkitExitFullscreen
+        ?? doc.mozCancelFullScreen
+        ?? doc.msExitFullscreen;
+      if (fn) {
+        try { fn.call(doc); } catch {}
+      }
+    };
+
     if (fullscreen) {
       document.body.classList.add("reader-fullscreen");
+      requestFs();
       try { localStorage.setItem("folio_fullscreen", "1"); } catch {}
     } else {
       document.body.classList.remove("reader-fullscreen");
+      exitFs();
       try { localStorage.setItem("folio_fullscreen", "0"); } catch {}
     }
     return () => { document.body.classList.remove("reader-fullscreen"); };
+  }, [fullscreen]);
+
+  // ── Sync state when user exits fullscreen via Esc key
+  useEffect(() => {
+    const onFsChange = () => {
+      const doc = document as any;
+      const isFs = !!(doc.fullscreenElement ?? doc.webkitFullscreenElement ?? doc.mozFullScreenElement ?? doc.msFullscreenElement);
+      if (!isFs && fullscreen) setFullscreen(false);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+    document.addEventListener("mozfullscreenchange", onFsChange);
+    document.addEventListener("MSFullscreenChange", onFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange);
+      document.removeEventListener("mozfullscreenchange", onFsChange);
+      document.removeEventListener("MSFullscreenChange", onFsChange);
+    };
   }, [fullscreen]);
 
   // ── Fetch + parse: EPUB first (if has images), else TXT

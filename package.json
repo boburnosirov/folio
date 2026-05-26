@@ -10,7 +10,8 @@
     "seed": "tsx --env-file=.env.local scripts/seed-books.ts",
     "migrate": "tsx --env-file=.env.local scripts/run-migration.ts",
     "seed:retry": "tsx --env-file=.env.local scripts/seed-retry.ts",
-    "seed:ru": "tsx --env-file=.env.local scripts/seed-ru.ts"
+    "seed:ru": "tsx --env-file=.env.local scripts/seed-ru.ts",
+    "seed:epubs": "tsx --env-file=.env.local scripts/seed-epubs-with-images.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
