@@ -28,7 +28,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-black/6 bg-background/78 backdrop-blur-2xl dark:border-white/10">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="group flex items-center gap-2" aria-label="Folio — главная">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition-transform duration-200 group-hover:scale-105">
             <BookOpen className="h-4 w-4" />
@@ -36,7 +36,7 @@ export function Header() {
           <span className="font-heading text-2xl font-semibold tracking-[-0.03em] text-foreground">Folio</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full bg-foreground/[0.045] p-1 md:flex dark:bg-white/[0.065]">
+        <nav className="ml-auto hidden items-center gap-1 rounded-full bg-foreground/[0.045] p-1 md:flex dark:bg-white/[0.065]">
           {navLinks.map((link) => {
             const active = pathname === link.href;
             return (
@@ -87,7 +87,7 @@ export function Header() {
           <UserMenu />
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="ml-auto flex items-center gap-2 md:hidden">
           <SettingsMenu />
           <ThemeToggle />
           <Button

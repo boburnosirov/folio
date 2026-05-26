@@ -45,6 +45,62 @@ function getDir(path: string): string {
   return idx >= 0 ? path.slice(0, idx + 1) : "";
 }
 
+/** Detect encoding from XML declaration or meta charset */
+function detectEncoding(bytes: Uint8Array): string {
+  // Sniff first 1024 bytes
+  const head = new TextDecoder("ascii", { fatal: false }).decode(bytes.slice(0, 1024));
+  const xmlMatch = head.match(/<\?xml[^>]*\sencoding\s*=\s*["']([^"']+)["']/i);
+  if (xmlMatch) return xmlMatch[1].toLowerCase();
+  const metaMatch = head.match(/<meta[^>]*charset\s*=\s*["']?([^"'>\s;]+)/i);
+  if (metaMatch) return metaMatch[1].toLowerCase();
+  return "utf-8";
+}
+
+/** Decode bytes using detected encoding, fallback to UTF-8 */
+function decodeBytes(bytes: Uint8Array): string {
+  const enc = detectEncoding(bytes);
+  try {
+    return new TextDecoder(enc, { fatal: false }).decode(bytes);
+  } catch {
+    return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+  }
+}
+
+/** Quality check: returns ratio of "good" chars (letters/digits/punct/whitespace) */
+function textQuality(s: string): number {
+  if (s.length === 0) return 0;
+  let good = 0;
+  let bad = 0;
+  // Sample up to 10000 chars
+  const sample = s.length > 10000 ? s.slice(0, 10000) : s;
+  for (let i = 0; i < sample.length; i++) {
+    const c = sample.charCodeAt(i);
+    if (
+      c === 0xFFFD ||                       // replacement char
+      (c < 32 && c !== 9 && c !== 10 && c !== 13) || // control chars
+      (c >= 0xE000 && c <= 0xF8FF)          // PUA (custom-font glyphs)
+    ) {
+      bad++;
+    } else if (
+      (c >= 32 && c < 127) ||               // basic ASCII
+      c === 0x00A0 ||                       // nbsp
+      (c >= 0x00A1 && c <= 0x024F) ||       // latin-1 supplement + extended
+      (c >= 0x0400 && c <= 0x04FF) ||       // Cyrillic
+      (c >= 0x2000 && c <= 0x206F) ||       // general punctuation (em dash etc.)
+      c === 9 || c === 10 || c === 13
+    ) {
+      good++;
+    } else if (c >= 0x4E00 && c <= 0x9FFF) {
+      // CJK — penalize since our library is RU/EN/FR/DE
+      bad++;
+    } else {
+      // Other Unicode — half-credit
+      good += 0.5;
+    }
+  }
+  return good / (good + bad);
+}
+
 /** Strip XHTML namespaces and dangerous content from EPUB chapter HTML */
 function sanitizeHtml(html: string, imageUrls: Map<string, string>, chapterDir: string): string {
   // Extract body content
@@ -218,16 +274,18 @@ export async function parseEpubFromUrl(url: string, charsPerPage = 1800): Promis
     const zip = await JSZip.loadAsync(buf);
 
     // 1. Find OPF via container.xml
-    const containerXml = await zip.file("META-INF/container.xml")?.async("text");
-    if (!containerXml) return null;
+    const containerBytes = await zip.file("META-INF/container.xml")?.async("uint8array");
+    if (!containerBytes) return null;
+    const containerXml = decodeBytes(containerBytes);
     const opfMatch = containerXml.match(/full-path=["']([^"']+)["']/i);
     if (!opfMatch) return null;
     const opfPath = opfMatch[1];
     const opfDir = getDir(opfPath);
 
     // 2. Parse OPF
-    const opfXml = await zip.file(opfPath)?.async("text");
-    if (!opfXml) return null;
+    const opfBytes = await zip.file(opfPath)?.async("uint8array");
+    if (!opfBytes) return null;
+    const opfXml = decodeBytes(opfBytes);
 
     // Manifest: id → {href, mediaType}
     const manifest = new Map<string, { href: string; mediaType: string }>();
@@ -269,15 +327,18 @@ export async function parseEpubFromUrl(url: string, charsPerPage = 1800): Promis
     }
     const hasImages = imageUrls.size > 0;
 
-    // 4. Load spine HTML chunks
+    // 4. Load spine HTML chunks (encoding-aware)
     const chunks: { content: string; dir: string }[] = [];
     for (const id of spine) {
       const item = manifest.get(id);
       if (!item) continue;
       if (!/html|xml/i.test(item.mediaType)) continue;
+      // Skip NCX TOC files
+      if (/ncx/i.test(item.mediaType)) continue;
       const fullPath = joinPath(opfDir, item.href);
-      const html = await zip.file(fullPath)?.async("text");
-      if (!html) continue;
+      const bytes = await zip.file(fullPath)?.async("uint8array");
+      if (!bytes) continue;
+      const html = decodeBytes(bytes);
       const dir = getDir(fullPath);
       chunks.push({ content: sanitizeHtml(html, imageUrls, dir), dir });
     }
@@ -285,6 +346,15 @@ export async function parseEpubFromUrl(url: string, charsPerPage = 1800): Promis
     // 5. Concatenate sanitized content and split into pages
     const combinedHtml = chunks.map(c => c.content).join("\n\n<hr/>\n\n");
     const pages = splitHtmlIntoPages(combinedHtml, charsPerPage);
+
+    // 6. Quality check: if too much garbage, reject EPUB (will fall back to TXT)
+    const samplePlain = pages.slice(0, 5).map(p => p.plainText).join(" ");
+    const quality = textQuality(samplePlain);
+    if (quality < 0.85) {
+      console.warn(`[parseEpub] Low text quality (${(quality * 100).toFixed(0)}%) — falling back to TXT`);
+      revokeBlobUrls(blobUrls);
+      return null;
+    }
 
     return { pages, title, language, hasImages, blobUrls };
   } catch (e) {

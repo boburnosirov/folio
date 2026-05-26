@@ -7,7 +7,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
 import { MostReadSection } from "@/components/home/MostReadSection";
 import { QuoteSection } from "@/components/home/QuoteSection";
-import { getLibraryStats } from "@/lib/books";
+import { getLibraryStats, getBooks } from "@/lib/books";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -24,7 +24,20 @@ const jsonLd = {
 };
 
 export default async function HomePage() {
-  const stats = await getLibraryStats();
+  const [stats, popularBooks] = await Promise.all([
+    getLibraryStats(),
+    getBooks({ limit: 16 }), // is_featured + best-rated + most-read
+  ]);
+
+  const heroBooks = popularBooks
+    .filter((b) => !!b.cover_url)
+    .slice(0, 8)
+    .map((b) => ({
+      slug: b.slug,
+      title: b.title_ru ?? b.title,
+      author: b.authors ? (b.authors.name_ru ?? b.authors.name) : "",
+      cover_url: b.cover_url,
+    }));
 
   return (
     <>
@@ -33,7 +46,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     <div className="relative bg-background text-foreground">
-      <HeroSection />
+      <HeroSection books={heroBooks} />
 
       <div aria-hidden className="pointer-events-none relative z-10 -mt-28 h-28 bg-gradient-to-b from-transparent to-background" />
 

@@ -71,7 +71,7 @@ export function UserMenu() {
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-foreground/12 bg-foreground/[0.04] pl-1 pr-3 py-1 text-sm font-medium text-foreground/70 transition-colors hover:bg-foreground/8 hover:text-foreground"
+        className="flex items-center gap-2 rounded-full bg-foreground/[0.045] pl-1 pr-3 py-1 text-sm font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
       >
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0071e3] text-[10px] font-bold text-white">
           {getInitials(user.email ?? "U")}
