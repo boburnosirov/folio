@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import Image from "next/image";
 import { ArrowLeft, BookOpen, Download, Calendar, Globe, Eye } from "lucide-react";
 import type { BookFull, BookWithAuthor, BookRating } from "@/lib/types/database";
 import { BookmarkButton } from "@/components/books/BookmarkButton";
@@ -15,12 +15,6 @@ const LANG_NAMES: Record<string, string> = {
   ru: "Русский", en: "English", uz: "Ўзбекча",
   fr: "Français", de: "Deutsch", other: "Другой",
 };
-
-const fade = (delay = 0) => ({
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as any },
-});
 
 interface Props {
   book: BookFull;
@@ -47,7 +41,7 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        <motion.div {...fade(0)} className="flex items-center justify-between">
+        <div className="flex items-center justify-between fade-up">
           <Link
             href="/catalog"
             className="mb-8 inline-flex items-center gap-1.5 text-sm text-foreground/50 transition-colors hover:text-foreground"
@@ -60,22 +54,21 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
             currentLanguage={book.language}
             companion={companionBook}
           />
-        </motion.div>
+        </div>
 
         <div className="grid gap-10 md:grid-cols-[260px_1fr]">
           {/* Cover */}
-          <motion.div
-            className="flex flex-col gap-3"
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-black/6 bg-foreground/[0.04] shadow-2xl shadow-black/20 dark:border-white/8">
+          <div className="flex flex-col gap-3 fade-up">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-black/6 bg-foreground/[0.04] shadow-2xl shadow-black/20 dark:border-white/8">
               {book.cover_url ? (
-                <img
+                <Image
                   src={book.cover_url}
                   alt={title}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 260px"
+                  priority
+                  className="object-cover"
+                  unoptimized={!book.cover_url.includes("supabase")}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 p-8 text-center">
@@ -84,35 +77,34 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
               )}
             </div>
 
-            <motion.div {...fade(0.2)}>
-              <Link
-                href={`/read/${book.slug}`}
-                className="flex h-12 items-center justify-center gap-2 rounded-full bg-[#0071e3] text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(0,113,227,.24)] transition-transform hover:scale-[1.02] active:scale-[.98] dark:bg-white dark:text-black"
-              >
-                <BookOpen className="h-4 w-4" />
-                Читать онлайн
-              </Link>
-            </motion.div>
+            <Link
+              href={`/read/${book.slug}`}
+              className="fade-up flex h-12 items-center justify-center gap-2 rounded-full bg-[#0071e3] text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(0,113,227,.24)] transition-transform hover:scale-[1.02] active:scale-[.98] dark:bg-white dark:text-black"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <BookOpen className="h-4 w-4" />
+              Читать онлайн
+            </Link>
 
-            <motion.div {...fade(0.22)}>
+            <div className="fade-up" style={{ animationDelay: "0.22s" }}>
               <FavoriteButton bookId={book.id} initialIsFavorite={isFavorite} isLoggedIn={isLoggedIn} />
-            </motion.div>
+            </div>
 
-            <motion.div {...fade(0.24)}>
+            <div className="fade-up" style={{ animationDelay: "0.24s" }}>
               <ReadLaterButton bookId={book.id} initialIsReadLater={isReadLater} isLoggedIn={isLoggedIn} />
-            </motion.div>
+            </div>
 
-            <motion.div {...fade(0.26)}>
+            <div className="fade-up" style={{ animationDelay: "0.26s" }}>
               <BookmarkButton
                 bookId={book.id}
                 bookSlug={book.slug}
                 initialBookmarked={isBookmarked}
                 isLoggedIn={isLoggedIn}
               />
-            </motion.div>
+            </div>
 
             {downloads.length > 0 && (
-              <motion.div className="flex flex-col gap-2" {...fade(0.28)}>
+              <div className="fade-up flex flex-col gap-2" style={{ animationDelay: "0.28s" }}>
                 {downloads.map((d) => (
                   <a
                     key={d.label}
@@ -127,25 +119,25 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
                     <span className="text-xs text-foreground/38">{d.hint}</span>
                   </a>
                 ))}
-              </motion.div>
+              </div>
             )}
 
             {book.gutenberg_id && (
-              <motion.a
-                {...fade(0.3)}
+              <a
                 href={`https://www.gutenberg.org/ebooks/${book.gutenberg_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-center text-xs text-foreground/35 transition-colors hover:text-foreground/55"
+                className="fade-up text-center text-xs text-foreground/35 transition-colors hover:text-foreground/55"
+                style={{ animationDelay: "0.3s" }}
               >
                 Project Gutenberg #{book.gutenberg_id}
-              </motion.a>
+              </a>
             )}
-          </motion.div>
+          </div>
 
           {/* Info */}
           <div>
-            <motion.div {...fade(0.1)}>
+            <div className="fade-up" style={{ animationDelay: "0.1s" }}>
               {book.categories && (
                 <Link
                   href={`/catalog?category=${book.category_slug}`}
@@ -160,9 +152,9 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
               {authorName && (
                 <p className="mt-3 text-xl text-foreground/60">{authorName}</p>
               )}
-            </motion.div>
+            </div>
 
-            <motion.div className="mt-5 flex flex-wrap gap-2" {...fade(0.18)}>
+            <div className="fade-up mt-5 flex flex-wrap gap-2" style={{ animationDelay: "0.18s" }}>
               {book.year_published && (
                 <span className="flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/[0.04] px-3 py-1 text-xs text-foreground/55">
                   <Calendar className="h-3 w-3" />
@@ -189,22 +181,16 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
                   ★ {(book.avg_rating ?? 0).toFixed(1)} / 10
                 </span>
               )}
-            </motion.div>
+            </div>
 
             {book.description && (
-              <motion.p
-                className="mt-7 max-w-prose text-base leading-8 text-foreground/65"
-                {...fade(0.25)}
-              >
+              <p className="fade-up mt-7 max-w-prose text-base leading-8 text-foreground/65" style={{ animationDelay: "0.25s" }}>
                 {book.description}
-              </motion.p>
+              </p>
             )}
 
             {book.authors?.bio && (
-              <motion.div
-                className="mt-8 rounded-2xl border border-foreground/8 bg-foreground/[0.03] p-5"
-                {...fade(0.32)}
-              >
+              <div className="fade-up mt-8 rounded-2xl border border-foreground/8 bg-foreground/[0.03] p-5" style={{ animationDelay: "0.32s" }}>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-foreground/38">
                   Об авторе
                 </p>
@@ -216,17 +202,17 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
                     {book.authors.nationality ? ` · ${book.authors.nationality}` : ""}
                   </p>
                 )}
-              </motion.div>
+              </div>
             )}
 
-            <motion.p className="mt-8 text-xs text-foreground/30" {...fade(0.38)}>
+            <p className="fade-up mt-8 text-xs text-foreground/30" style={{ animationDelay: "0.38s" }}>
               Текст находится в общественном достоянии (public domain) и предоставляется бесплатно.
-            </motion.p>
+            </p>
           </div>
         </div>
 
         {/* Ratings & Comments */}
-        <motion.div {...fade(0.42)}>
+        <div className="fade-up" style={{ animationDelay: "0.42s" }}>
           <RatingsSection
             bookId={book.id}
             bookTitle={title}
@@ -236,12 +222,12 @@ export function BookDetail({ book, relatedBooks, isBookmarked, isLoggedIn, compa
             ratingCount={book.rating_count ?? 0}
             isLoggedIn={isLoggedIn}
           />
-        </motion.div>
+        </div>
 
         {/* Related books */}
-        <motion.div {...fade(0.48)}>
+        <div className="fade-up" style={{ animationDelay: "0.48s" }}>
           <RelatedBooks books={relatedBooks} />
-        </motion.div>
+        </div>
       </div>
     </div>
   );

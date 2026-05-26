@@ -12,8 +12,9 @@ export async function getFavorites(): Promise<BookWithAuthor[]> {
 
   const { data } = await supabase
     .from("user_favorites")
-    .select("book_id, books(*, authors(*))")
+    .select("book_id, books!inner(*, authors(*))")
     .eq("user_id", user.id)
+    .eq("books.is_public", true)
     .order("created_at", { ascending: false });
 
   return ((data ?? []).map((r: any) => r.books).filter(Boolean)) as BookWithAuthor[];
@@ -64,8 +65,9 @@ export async function getReadLater(): Promise<BookWithAuthor[]> {
 
   const { data } = await supabase
     .from("user_read_later")
-    .select("book_id, books(*, authors(*))")
+    .select("book_id, books!inner(*, authors(*))")
     .eq("user_id", user.id)
+    .eq("books.is_public", true)
     .order("created_at", { ascending: false });
 
   return ((data ?? []).map((r: any) => r.books).filter(Boolean)) as BookWithAuthor[];

@@ -11,19 +11,21 @@ export default async function ProfilePage() {
 
   const isAdmin = !!user.email && user.email === process.env.ADMIN_EMAIL;
 
-  // Fetch reading progress with book info
+  // Fetch reading progress with book info (only public, readable books)
   const { data: progressRows } = await supabase
     .from("reading_progress")
-    .select("position, updated_at, books(id, slug, title, title_ru, cover_url, authors(name, name_ru))")
+    .select("position, updated_at, books!inner(id, slug, title, title_ru, cover_url, is_public, txt_url, authors(name, name_ru))")
     .eq("user_id", user.id)
+    .eq("books.is_public", true)
     .order("updated_at", { ascending: false })
     .limit(10);
 
-  // Fetch bookmarks with book info
+  // Fetch bookmarks with book info (only public books)
   const { data: bookmarkRows } = await supabase
     .from("user_bookmarks")
-    .select("created_at, books(id, slug, title, title_ru, cover_url, authors(name, name_ru))")
+    .select("created_at, books!inner(id, slug, title, title_ru, cover_url, is_public, authors(name, name_ru))")
     .eq("user_id", user.id)
+    .eq("books.is_public", true)
     .order("created_at", { ascending: false })
     .limit(20);
 

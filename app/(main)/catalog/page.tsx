@@ -41,7 +41,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 
   const categories: Category[] = categoriesResult.data ?? [];
   const displayBooks = deduplicateBooks(books, language);
-  const displayCount = language ? totalCount : Math.round(totalCount / 2) || displayBooks.length;
+  // After hiding copyrighted books, EN↔RU pairs are mostly gone — count actual unique books
+  const displayCount = displayBooks.length === books.length ? totalCount : displayBooks.length;
 
   return (
     <div className="min-h-screen bg-background">

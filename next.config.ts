@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "covers.openlibrary.org" },
+      { protocol: "https", hostname: "www.gutenberg.org" },
+      { protocol: "https", hostname: "archive.org" },
     ],
     deviceSizes: [360, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [56, 64, 96, 128, 160, 192, 256],

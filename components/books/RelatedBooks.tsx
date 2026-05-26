@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { BookWithAuthor } from "@/lib/types/database";
 
 interface Props {
@@ -21,14 +22,19 @@ export function RelatedBooks({ books }: Props) {
             <Link
               key={book.id}
               href={`/books/${book.slug}`}
+              prefetch={false}
               className="group flex flex-col gap-2"
             >
-              <div className="aspect-[2/3] overflow-hidden rounded-xl border border-foreground/8 bg-foreground/[0.04] shadow-md transition-transform group-hover:scale-[1.02]">
+              <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-foreground/8 bg-foreground/[0.04] shadow-md transition-transform group-hover:scale-[1.02]">
                 {book.cover_url ? (
-                  <img
+                  <Image
                     src={book.cover_url}
                     alt={title}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                    loading="lazy"
+                    className="object-cover"
+                    unoptimized={!book.cover_url.includes("supabase")}
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 p-4 text-center">
